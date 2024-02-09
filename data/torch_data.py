@@ -1,5 +1,6 @@
 import os
 import pickle
+import torch
 
 import esm
 from torch_geometric.data import Data, Batch
@@ -47,7 +48,6 @@ class SingleChainData(Dataset):
             chain = pickle.load(f)
 
         data_fields = list(chain.__dataclass_fields__.keys())
-        print(chain)
         chain.mask_data()
         geo_data = {}
         seq_data = {}

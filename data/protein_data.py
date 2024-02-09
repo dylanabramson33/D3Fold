@@ -146,6 +146,7 @@ class Chain:
         mask = torch.rand(self.coords.data.shape[0]) < mask_prob
         for field in self.__dataclass_fields__.keys():
             field_data = getattr(self, field)
+            print(field_data.type_.type)
             if type(field_data.data) is torch.Tensor:
               field_data.mask_data(mask)
             if type(field_data.data) is np.ndarray:
