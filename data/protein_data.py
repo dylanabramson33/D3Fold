@@ -84,6 +84,7 @@ class ProteinDataType:
 class Transform:
   output_type: ProteinDataType
   fn: Callable[[AA, AA], ProteinDataType]
+  
 
   def __call__(self, backbone_struct, ca_struct):
     self.transform(backbone_struct, ca_struct)
@@ -120,11 +121,7 @@ RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
 
 @dataclass
 class Chain:
-    coords: ProteinData
-    seq: ProteinData
-    frames_R: ProteinData
-    frames_t: ProteinData
-    raw_seq: ProteinData
+    pdb_transforms: list[Transform]
 
     @classmethod
     def from_pdb(cls, pdb_path):
