@@ -22,7 +22,7 @@ def convert_to_tensor(struct, res="CA"):
     chain_data = convert_to_resolution(struct, res)
     coords = torch.tensor(chain_data.coord)
     seq = chain_data.res_name
-    seq = torch.tensor([THREE_TO_IND[x] for x in seq])
+    seq = torch.tensor([THREE_TO_IND[x] for x in seq], dtype=float)
     
     return coords, seq
 
