@@ -1,11 +1,13 @@
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 import torch
 from biotite import structure
 import biotite.structure.io.pdb as pdb
+from biotite.structure import AtomArray as AA
 
-from constants import THREE_TO_IND
+from constants import THREE_TO_IND, THREE_TO_ONE
 
 def convert_to_resolution(struct, res="CA"):
     chain_data = struct[~struct.hetero]
@@ -66,7 +68,6 @@ def construct_ipa_frames(backbone_struct, ca_struct):
 
     return frames, residue_mask
 
-
 class ProteinDataType:
     def __init__(self, type=None, pad_type="torch_geo", mask_template=None):
         self.type = type
@@ -78,6 +79,15 @@ class ProteinDataType:
 
     def __str__(self):
         return self.type
+
+@dataclass
+class Transform:
+  output_type: ProteinDataType
+  fn: Callable[[AA, AA], ProteinDataType]
+
+  def __call__(self, backbone_struct, ca_struct):
+    self.transform(backbone_struct, ca_struct)
+    return
 
 @dataclass
 class ProteinData():
@@ -105,27 +115,27 @@ SEQ = ProteinDataType("SEQ", pad_type="seq", mask_template=seq_mask)
 FRAME_R = ProteinDataType("FRAME_R", pad_type="torch_geometric", mask_template=None)
 FRAME_T = ProteinDataType("FRAME_T", pad_type="torch_geometric", mask_template=None)
 
-coord_mask = torch.ones(3) * torch.nan
-COORD = ProteinDataType("COORD", pad_type="torch_geometric", mask_template=coord_mask)
-
-seq_mask = torch.ones(1) * torch.nan
-SEQ = ProteinDataType("SEQ", pad_type="seq", mask_template=seq_mask)
+raw_mask = np.array(["<mask>"])
+RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
 
 @dataclass
 class Chain:
     coords: ProteinData
     seq: ProteinData
-    frame_R: ProteinData
-    frame_t: ProteinData
-    
+    frames_R: ProteinData
+    frames_t: ProteinData
+    raw_seq: ProteinData
+
     @classmethod
     def from_pdb(cls, pdb_path):
         struct = pdb.PDBFile.read(pdb_path).get_structure(model=1)
         backbone_struct = convert_to_resolution(struct, res="backbone")
         ca_struct = convert_to_resolution(backbone_struct, res="CA")
-     
+        raw_seq = [THREE_TO_ONE[x.res_name] for x in ca_struct]
+        raw_seq = np.array(raw_seq, dtype='object')
         coords, seq = convert_to_tensor(ca_struct)
         frames, residue_mask = construct_ipa_frames(backbone_struct, ca_struct)
+
         frames_R = torch.stack([f[0] for f in frames])
         frames_t = torch.stack([f[1] for f in frames])
         # remove broken indices
@@ -138,10 +148,17 @@ class Chain:
         seq = ProteinData(seq, SEQ)
         frames_R = ProteinData(frames_R, FRAME_R)
         frames_t = ProteinData(frames_t, FRAME_T)
-        return cls(coords, seq, frames_R, frames_t)
+        raw_seq = ProteinData(raw_seq, RAW_SEQ)
+        return cls(coords, seq, frames_R, frames_t, raw_seq)
 
     def mask_data(self, mask_prob=0.1):
         mask = torch.rand(self.coords.data.shape[0]) < mask_prob
         for field in self.__dataclass_fields__.keys():
             field_data = getattr(self, field)
-            field_data.mask_data(mask)
+            if type(field_data.data) is torch.Tensor:
+              field_data.mask_data(mask)
+            if type(field_data.data) is np.ndarray:
+              np_mask = mask.numpy()
+              field_data.mask_data(np_mask)
+        return self
+            
