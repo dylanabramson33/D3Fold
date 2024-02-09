@@ -16,12 +16,13 @@ class SingleChainData(Dataset):
     def __init__(self, chain_dir=None, pickled_dir=None, force_process = True, limit_by=None):
         self.chain_dir = chain_dir
         self.pickled_dir = pickled_dir
+        self.limit_by = limit_by
         if not os.path.exists(self.pickled_dir) or force_process:
             self.preprocess()
 
         self.length = len(os.listdir(self.pickled_dir))
         self.files = os.listdir(self.pickled_dir)
-        self.limit_by = limit_by
+       
 
     def preprocess(self):
         os.makedirs(self.pickled_dir, exist_ok=True)
