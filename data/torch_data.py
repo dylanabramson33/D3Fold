@@ -6,7 +6,7 @@ from torch_geometric.data import Data, Batch
 from torch.utils.data import DataLoader, Dataset
 from torch.nn.utils.rnn import pad_sequence
 
-from protein_data import Chain 
+from data.protein_data import Chain 
 
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -47,6 +47,7 @@ class SingleChainData(Dataset):
             chain = pickle.load(f)
 
         data_fields = list(chain.__dataclass_fields__.keys())
+        print(chain)
         chain.mask_data()
         geo_data = {}
         seq_data = {}
@@ -76,3 +77,4 @@ def collate_chains(data_list):
     batch_data.tokens = batch_tokens
         
     return batch_data
+

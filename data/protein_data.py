@@ -81,15 +81,6 @@ class ProteinDataType:
         return self.type
 
 @dataclass
-class Transform:
-  output_type: ProteinDataType
-  fn: Callable[[AA, AA], ProteinDataType]
-
-  def __call__(self, backbone_struct, ca_struct):
-    self.transform(backbone_struct, ca_struct)
-    return
-
-@dataclass
 class ProteinData():
     data: torch.Tensor
     type_: ProteinDataType
