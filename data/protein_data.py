@@ -7,7 +7,7 @@ from biotite import structure
 import biotite.structure.io.pdb as pdb
 from biotite.structure import AtomArray as AA
 
-from constants import THREE_TO_IND, THREE_TO_ONE
+from data.constants import THREE_TO_IND, THREE_TO_ONE
 
 def convert_to_resolution(struct, res="CA"):
     chain_data = struct[~struct.hetero]
