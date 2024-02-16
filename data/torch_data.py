@@ -72,7 +72,13 @@ def collate_chains(data_list):
     geo_data_list = [d[0] for d in data_list]
     seq_data_list = [d[1] for d in data_list]
     raw_seq_data_list = [(f"protein{i}", ''.join(d[2]['raw_seq'])) for i,d in enumerate(data_list)]
-    batch_data = Batch.from_data_list(geo_data_list)
+    batch_data = Batch.from_data_list(geo_data_list, follow_batch=["coords"])
+    
+    batch_data.batch = batch_data.coords_batch
+    batch_data.ptr = batch_data.coords_ptr
+    del batch_data.coords_batch
+    del batch_data.coords_ptr
+
     for key in seq_data_list[0].keys():
         seq = pad_sequence([d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan)
         batch_data[key] = seq
