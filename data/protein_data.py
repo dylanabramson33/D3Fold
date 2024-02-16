@@ -138,7 +138,7 @@ class Chain:
         frames_R = frames_R[residue_mask]
         frames_t = frames_t[residue_mask]
 
-        pairwise_dist = torch.cdist(coords, coords)
+        pairwise_dist = torch.cdist(coords, coords).unsqueeze(0)
         coords = ProteinData(coords, COORD)
         seq = ProteinData(seq, SEQ)
         frames_R = ProteinData(frames_R, FRAME_R)
