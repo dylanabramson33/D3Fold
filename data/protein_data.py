@@ -108,6 +108,9 @@ FRAME_T = ProteinDataType("FRAME_T", pad_type="torch_geometric", mask_template=N
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
 
+PAIR_DIST = ProteinDataType("PAIRWISE_DIST", pad_type="seq", mask_template=None)
+
+
 @dataclass
 class Chain:
     coords: ProteinData
@@ -115,6 +118,7 @@ class Chain:
     frames_R: ProteinData
     frames_t: ProteinData
     raw_seq: ProteinData
+    pair_dist: ProteinData
 
     @classmethod
     def from_pdb(cls, pdb_path):
@@ -134,12 +138,14 @@ class Chain:
         frames_R = frames_R[residue_mask]
         frames_t = frames_t[residue_mask]
 
+        pairwise_dist = torch.cdist(coords, coords)
         coords = ProteinData(coords, COORD)
         seq = ProteinData(seq, SEQ)
         frames_R = ProteinData(frames_R, FRAME_R)
         frames_t = ProteinData(frames_t, FRAME_T)
         raw_seq = ProteinData(raw_seq, RAW_SEQ)
-        return cls(coords, seq, frames_R, frames_t, raw_seq)
+        pairwise_dist = ProteinData(pairwise_dist, PAIR_DIST)
+        return cls(coords, seq, frames_R, frames_t, raw_seq, pairwise_dist)
 
     def mask_data(self, mask_prob=0.1, ignore_mask_fields=[]):
         mask = torch.rand(self.coords.data.shape[0]) < mask_prob
