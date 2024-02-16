@@ -39,7 +39,6 @@ def rigid_from_3_points(x1,x2,x3):
 
 def get_ipa_mask(backbone_struct, ca_struct):
   res_ids = ca_struct.res_id
-
   clean_residues = []
   clean_backbone = []
   current_backbone_ind = 0
@@ -142,11 +141,12 @@ class Chain:
         raw_seq = ProteinData(raw_seq, RAW_SEQ)
         return cls(coords, seq, frames_R, frames_t, raw_seq)
 
-    def mask_data(self, mask_prob=0.1):
+    def mask_data(self, mask_prob=0.1, ignore_mask_fields=[]):
         mask = torch.rand(self.coords.data.shape[0]) < mask_prob
         for field in self.__dataclass_fields__.keys():
+            if field in ignore_mask_fields:
+              continue
             field_data = getattr(self, field)
-            print(field_data.type_.type)
             if type(field_data.data) is torch.Tensor:
               field_data.mask_data(mask)
             if type(field_data.data) is np.ndarray:
