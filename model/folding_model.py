@@ -6,18 +6,34 @@ from torch.nn import functional as F
 import esm
 from torch_geometric.nn import radius_graph
 
+from os import listdir
+from mamba_ssm import Mamba
+from torch.nn import functional as F
 
-class PairRepModule(nn.Module):
-    def __init__(self):
+class FoldingTrunk(nn.Module):
+    def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
         super().__init__()
+        self.s_project = nn.Linear(s_dim_in, s_dim_out)
+        self.z_project = nn.Linear(z_dim_in, z_dim_out)
+        # this is black magic rn, I have no idea what Mamba does
+        self.mamba = Mamba(
+            d_model=s_dim_out, # Model dimension d_model
+            d_state=16,  # SSM state expansion factor
+            d_conv=4,    # Local convolution width
+            expand=2,    # Block expansion factor
+        ).to("cuda")
 
     def outer_product(self, x, y):
-        return torch.einsum("bi,bj->bij", x, y)
+      return torch.einsum("bsf,btf->bstf", x, y)
 
-    def forward(self, x):
-        return x
+    def forward(self, s, z):
+        s_prime = self.s_project(s)
+        s_prime = self.mamba(s_prime)
+        z_prime = self.z_project(z)
+        z_prime = z_prime + self.outer_product(s_prime, s_prime)
+        return s_prime, z_prime
 
-class FoldingTrunk(L.LightningModule):
+class D3Fold(L.LightningModule):
     def __init__(self, mamba_layers=3, freeze_esm=False):
         super().__init__()
 
@@ -26,21 +42,18 @@ class FoldingTrunk(L.LightningModule):
         if freeze_esm:
             self.esm.eval()
             self.esm.requires_grad_(False)
-        
-
         esm_dim = 1280
-        self.mamba = Mamba(
-            # This module uses roughly 3 * expand * d_model^2 parameters
-            d_model=1280, # Model dimension d_model
-            d_state=16,  # SSM state expansion factor
-            d_conv=4,    # Local convolution width
-            expand=2,    # Block expansion factor
-        ).to("cuda")
+        self.folding_trunk = FoldingTrunk(
+            s_dim_in=esm_dim,
+            s_dim_out=32,
+            z_dim_in=1,
+            z_dim_out=32,
+        )
 
     @staticmethod
-    def get_distance_matrix(data):
+    def get_distance_matrix(data, r=10):
       num_graphs = data.seq.shape[0]
-      contact_edges = radius_graph(data.coords, r=5,  batch=data.batch)
+      contact_edges = radius_graph(data.coords, r=r,  batch=data.batch)
       graph_sizes = data.batch.bincount()
       largest_graph = torch.max(graph_sizes)
       num_nodes = data.coords.shape[0]
@@ -63,26 +76,20 @@ class FoldingTrunk(L.LightningModule):
 
       return sequence_of_contacts
 
-    def make_sequence_dense(self, seq):
-        seq_len = seq.shape[0]
-        dense_seq = torch.zeros((seq_len, seq_len))
-
     def forward(self, batch):
         coords = batch.coords
         esm_seq = batch.tokens
         seq_embed = self.esm(esm_seq.long(), repr_layers=[33], return_contacts=True)
         files = batch.file
-        pred_contacts = seq_embed['contacts']
-        pred_contacts = pred_contacts
-        rep = seq_embed['representations'][33]
-        mamba = self.mamba(rep)
-        # pred_contacts = self.mamba(rep)
-        return pred_contacts
+        # attention based contacts
+        att_contacts = seq_embed['contacts'].unsqueeze(-1)
+        rep = seq_embed['representations'][33][1:-1]
+        s, z = self.folding_trunk(rep, att_contacts)
+        return att_contacts
 
     def training_step(self, batch, batch_idx):
         pred = self.forward(batch.cuda())
         distance_mat = self.get_distance_matrix(batch)
-
         loss = F.binary_cross_entropy(pred, distance_mat.cuda())
         self.log("train_loss", loss)
         return loss
