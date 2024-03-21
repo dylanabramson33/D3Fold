@@ -14,7 +14,16 @@ model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
 batch_converter = alphabet.get_batch_converter()
 
 class SingleChainData(Dataset):
-    def __init__(self, chain_dir=None, pickled_dir=None, force_process = True, limit_by=None, use_mask=True, ignore_mask_fields=False):
+    def __init__(
+        self, 
+        chain_dir=None, 
+        pickled_dir=None, 
+        force_process=True, 
+        limit_by=None, 
+        use_mask=True,
+        use_crop=True,
+        ignore_mask_fields=False,
+        ):
         self.chain_dir = chain_dir
         self.pickled_dir = pickled_dir
         self.limit_by = limit_by
@@ -24,6 +33,7 @@ class SingleChainData(Dataset):
         self.length = len(os.listdir(self.pickled_dir))
         self.files = os.listdir(self.pickled_dir)
         self.use_mask = use_mask
+        self.use_crop = use_crop
         self.ignore_mask_fields = ignore_mask_fields
        
 
@@ -50,8 +60,11 @@ class SingleChainData(Dataset):
             chain = pickle.load(f)
 
         data_fields = list(chain.__dataclass_fields__.keys())
+        if self.use_crop:
+            chain.crop_data()
         if self.use_mask:
             chain.mask_data(ignore_mask_fields=self.ignore_mask_fields)
+            
         geo_data = {}
         seq_data = {}
         raw_seq_data = {}

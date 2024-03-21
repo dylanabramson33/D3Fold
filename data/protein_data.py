@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
+import random
 import numpy as np
 import torch
 from biotite import structure
@@ -153,4 +154,44 @@ class Chain:
               np_mask = mask.numpy()
               field_data.mask_data(np_mask)
         return self
-            
+    
+    def random_crop_mask(self, crop_len=400):
+        start = random.randint(0, len(self.coords.data) - crop_len)
+        end = start + crop_len
+        mask = torch.zeros(len(self.coords.data))
+        mask[start:end] = 1
+        return mask 
+
+    def center_crop_mask(self, crop_len=400):
+        start = len(self.coords.data) // 2 - crop_len // 2
+        end = start + crop_len
+        mask = torch.zeros(len(self.coords.data))
+        mask[start:end] = 1
+        return mask
+
+    def crop_data(self, crop_strategy="mix", crop_len=400):
+      if len(self.coords.data) < crop_len:
+        return
+      
+      crop_fns = {
+        "random": self.random_crop_mask,
+        "center": self.center_crop_mask
+      }
+
+      if crop_strategy == "random":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "center":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "mix":
+        # randomly select strategy
+        crop_strategy = random.choice(crop_fns.keys())
+        mask = crop_fns[crop_strategy](crop_len)
+      else:
+        raise ValueError("Invalid crop strategy")
+      for field in self.__dataclass_fields__.keys():
+        field_data = getattr(self, field)
+        if type(field_data.data) is torch.Tensor:
+          field_data.data = field_data.data[mask]
+        if type(field_data.data) is np.ndarray:
+              np_mask = mask.numpy()
+              field_data.mask_data(np_mask) 
