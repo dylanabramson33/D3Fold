@@ -188,10 +188,11 @@ class Chain:
         mask = crop_fns[crop_strategy](crop_len)
       else:
         raise ValueError("Invalid crop strategy")
+      
       for field in self.__dataclass_fields__.keys():
         field_data = getattr(self, field)
         if type(field_data.data) is torch.Tensor:
           field_data.data = field_data.data[mask]
         if type(field_data.data) is np.ndarray:
-              np_mask = mask.numpy()
-              field_data.mask_data(np_mask) 
+          np_mask = mask.numpy()
+          field_data.data = field_data.data[np_mask]
