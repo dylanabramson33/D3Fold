@@ -184,7 +184,7 @@ class Chain:
         mask = crop_fns[crop_strategy](crop_len)
       elif crop_strategy == "mix":
         # randomly select strategy
-        crop_strategy = random.choice(crop_fns.keys())
+        crop_strategy = random.choice(list(crop_fns.keys()))
         mask = crop_fns[crop_strategy](crop_len)
       else:
         raise ValueError("Invalid crop strategy")
