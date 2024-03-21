@@ -10,6 +10,10 @@ from os import listdir
 from mamba_ssm import Mamba
 from torch.nn import functional as F
 
+from os import listdir
+from mamba_ssm import Mamba
+from torch.nn import functional as F
+
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
         super().__init__()
@@ -28,8 +32,9 @@ class FoldingTrunk(nn.Module):
 
     def forward(self, s, z):
         s_prime = self.s_project(s)
-        s_prime = self.mamba(s_prime)
+        # s_prime = self.mamba(s_prime)
         z_prime = self.z_project(z)
+        op = self.outer_product(s_prime, s_prime)
         z_prime = z_prime + self.outer_product(s_prime, s_prime)
         return s_prime, z_prime
 
@@ -38,7 +43,7 @@ class D3Fold(L.LightningModule):
         super().__init__()
 
         model, _ = esm.pretrained.esm2_t33_650M_UR50D()
-        self.esm = model.cuda()
+        self.esm = model
         if freeze_esm:
             self.esm.eval()
             self.esm.requires_grad_(False)
@@ -49,6 +54,8 @@ class D3Fold(L.LightningModule):
             z_dim_in=1,
             z_dim_out=32,
         )
+
+        self.final_z_proj = nn.Linear(32, 1)
 
     @staticmethod
     def get_distance_matrix(data, r=10):
@@ -76,6 +83,10 @@ class D3Fold(L.LightningModule):
 
       return sequence_of_contacts
 
+    def make_sequence_dense(self, seq):
+        seq_len = seq.shape[0]
+        dense_seq = torch.zeros((seq_len, seq_len))
+
     def forward(self, batch):
         coords = batch.coords
         esm_seq = batch.tokens
@@ -83,14 +94,17 @@ class D3Fold(L.LightningModule):
         files = batch.file
         # attention based contacts
         att_contacts = seq_embed['contacts'].unsqueeze(-1)
-        rep = seq_embed['representations'][33][1:-1]
+        rep = seq_embed['representations'][33][:,1:-1]
         s, z = self.folding_trunk(rep, att_contacts)
-        return att_contacts
+        z = self.final_z_proj(z).squeeze(-1)
+        att_contacts = att_contacts.squeeze(-1)
+        return s, att_contacts
 
     def training_step(self, batch, batch_idx):
-        pred = self.forward(batch.cuda())
+        s, z = self.forward(batch)
         distance_mat = self.get_distance_matrix(batch)
-        loss = F.binary_cross_entropy(pred, distance_mat.cuda())
+        z = F.sigmoid(z)
+        loss = F.binary_cross_entropy(z, distance_mat.to(z.device))
         self.log("train_loss", loss)
         return loss
 
