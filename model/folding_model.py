@@ -32,9 +32,8 @@ class FoldingTrunk(nn.Module):
 
     def forward(self, s, z):
         s_prime = self.s_project(s)
-        # s_prime = self.mamba(s_prime)
+        s_prime = self.mamba(s_prime)
         z_prime = self.z_project(z)
-        op = self.outer_product(s_prime, s_prime)
         z_prime = z_prime + self.outer_product(s_prime, s_prime)
         return s_prime, z_prime
 
@@ -83,10 +82,6 @@ class D3Fold(L.LightningModule):
 
       return sequence_of_contacts
 
-    def make_sequence_dense(self, seq):
-        seq_len = seq.shape[0]
-        dense_seq = torch.zeros((seq_len, seq_len))
-
     def forward(self, batch):
         coords = batch.coords
         esm_seq = batch.tokens
@@ -98,7 +93,7 @@ class D3Fold(L.LightningModule):
         s, z = self.folding_trunk(rep, att_contacts)
         z = self.final_z_proj(z).squeeze(-1)
         att_contacts = att_contacts.squeeze(-1)
-        return s, att_contacts
+        return s, z
 
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)

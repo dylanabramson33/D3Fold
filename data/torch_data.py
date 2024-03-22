@@ -27,6 +27,7 @@ class SingleChainData(Dataset):
         self.chain_dir = chain_dir
         self.pickled_dir = pickled_dir
         self.limit_by = limit_by
+        
         if not os.path.exists(self.pickled_dir) or force_process:
             self.preprocess()
 

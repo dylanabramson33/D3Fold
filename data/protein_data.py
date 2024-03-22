@@ -118,8 +118,11 @@ class Chain:
     raw_seq: ProteinData
 
     @classmethod
-    def from_pdb(cls, pdb_path):
+    def from_pdb(cls, pdb_path, chain_id=None):
         struct = pdb.PDBFile.read(pdb_path).get_structure(model=1)
+        if chain_id is not None:
+            struct = struct[struct.chain_id == chain_id]
+            
         backbone_struct = convert_to_resolution(struct, res="backbone")
         ca_struct = convert_to_resolution(backbone_struct, res="CA")
         raw_seq = [THREE_TO_ONE[x.res_name] for x in ca_struct]
