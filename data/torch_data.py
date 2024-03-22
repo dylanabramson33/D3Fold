@@ -4,7 +4,7 @@ import torch
 
 import esm
 from torch_geometric.data import Data, Batch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 
 from data.protein_data import Chain 
@@ -64,7 +64,7 @@ class SingleChainData(Dataset):
             chain.crop_data()
         if self.use_mask:
             chain.mask_data(ignore_mask_fields=self.ignore_mask_fields)
-            
+
         geo_data = {}
         seq_data = {}
         raw_seq_data = {}
