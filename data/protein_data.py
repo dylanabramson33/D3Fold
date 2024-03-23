@@ -83,12 +83,14 @@ class ProteinDataType:
 @dataclass
 class ProteinData():
     data: torch.Tensor
+    masked_data: torch.Tensor = None
     type_: ProteinDataType
 
     def mask_data(self, mask):
         if self.type_.mask_template is None:
             return self.data
-
+        self.masked_data = self.data.clone()
+        self.masked_data = self.masked_data[mask]
         self.data[mask] = self.type_.mask_template
 
     def __repr__(self):

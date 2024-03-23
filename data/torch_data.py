@@ -73,10 +73,13 @@ class SingleChainData(Dataset):
             field_data = getattr(chain, field)
             if field_data.type_.pad_type == "torch_geometric":
                 geo_data[field] = field_data.data
+                geo_data[f"{field}_mask"] = field_data.mask
             elif field_data.type_.pad_type == "seq":
                 seq_data[field] = field_data.data
+                seq_data[f"{field}_mask"] = field_data.mask
             elif field_data.type_.pad_type == "esm":
                 raw_seq_data[field] = field_data.data
+                raw_seq_data[f"{field}_mask"] = field_data.mask
 
         geo_data = Data.from_dict(geo_data)
         geo_data.file = f
