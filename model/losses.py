@@ -1,4 +1,5 @@
 import torch.nn as nn
+
 class LossFn:
     def __init__(self, loss_fn, representation_target="pair"):
         self.loss_fn = loss_fn

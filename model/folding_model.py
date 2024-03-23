@@ -13,7 +13,7 @@ from torch.nn import functional as F
 from os import listdir
 from mamba_ssm import Mamba
 from torch.nn import functional as F
-from losses import contact_loss, sequence_loss
+from model.losses import contact_loss, sequence_loss
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
