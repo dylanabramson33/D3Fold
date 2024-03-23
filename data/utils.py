@@ -33,10 +33,3 @@ def process_protein_inv(path_to_split_file, path_to_file):
     
     with open(os.path.join(path_to_file, "test.json"), "w") as f:
         json.dump(pdb_chain_map_test, f)
-
-
-
-    
-
-process_protein_inv("/Users/dylanabramson/Downloads/data/cath4.2/chain_set_splits.json", "./inverse_data")
-    
