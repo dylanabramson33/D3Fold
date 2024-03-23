@@ -83,8 +83,8 @@ class ProteinDataType:
 @dataclass
 class ProteinData():
     data: torch.Tensor
-    masked_data: torch.Tensor = None
     type_: ProteinDataType
+    masked_data: torch.Tensor = None
 
     def mask_data(self, mask):
         if self.type_.mask_template is None:
