@@ -89,7 +89,10 @@ class ProteinData():
     def mask_data(self, mask):
         if self.type_.mask_template is None:
             return self.data
-        self.masked_data = self.data.clone()
+        if type(mask) is np.ndarray:
+          self.masked_data = self.data.copy()
+        elif type(mask) is torch.Tensor:
+           self.masked_data = self.data.clone()
         self.masked_data = self.masked_data[mask]
         self.data[mask] = self.type_.mask_template
 
