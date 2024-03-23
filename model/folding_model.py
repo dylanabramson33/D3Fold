@@ -13,6 +13,7 @@ from torch.nn import functional as F
 from os import listdir
 from mamba_ssm import Mamba
 from torch.nn import functional as F
+from losses import contact_loss, sequence_loss
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
@@ -40,7 +41,7 @@ class FoldingTrunk(nn.Module):
 class D3Fold(L.LightningModule):
     def __init__(self, mamba_layers=3, freeze_esm=False):
         super().__init__()
-
+        self.losses = [contact_loss, sequence_loss]
         model, _ = esm.pretrained.esm2_t33_650M_UR50D()
         self.esm = model
         if freeze_esm:
@@ -98,11 +99,18 @@ class D3Fold(L.LightningModule):
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
         distance_mat = self.get_distance_matrix(batch)
-        z = F.sigmoid(z)
-        loss = F.binary_cross_entropy(z, distance_mat.to(z.device))
+        loss = 0 
+        mask_unmasked = batch.mask.bool()  
+        for loss_fn in self.losses:
+            if loss.representation_target == "pair":
+                loss += loss_fn(z, distance_mat)
+            elif loss.representation_target == "seq":
+                loss += loss_fn(s, batch.seq)
+            
         self.log("train_loss", loss)
         return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4)
         return optimizer
+    

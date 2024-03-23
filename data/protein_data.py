@@ -116,6 +116,7 @@ class Chain:
     frames_R: ProteinData
     frames_t: ProteinData
     raw_seq: ProteinData
+    mask: ProteinDataType = None
 
     @classmethod
     def from_pdb(cls, pdb_path, chain_id=None):
@@ -156,6 +157,7 @@ class Chain:
             if type(field_data.data) is np.ndarray:
               np_mask = mask.numpy()
               field_data.mask_data(np_mask)
+
         return self
     
     def random_crop_mask(self, crop_len=400):
