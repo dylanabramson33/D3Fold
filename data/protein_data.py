@@ -118,7 +118,6 @@ class Chain:
     frames_R: ProteinData
     frames_t: ProteinData
     raw_seq: ProteinData
-    mask: ProteinDataType = None
 
     @classmethod
     def from_pdb(cls, pdb_path, chain_id=None):
