@@ -100,7 +100,7 @@ class D3Fold(L.LightningModule):
         s, z = self.forward(batch)
         distance_mat = self.get_distance_matrix(batch)
         loss = 0 
-        mask_unmasked = batch.mask.bool()  
+        seq_mask = batch.
         for loss_fn in self.losses:
             if loss.representation_target == "pair":
                 loss += loss_fn(z, distance_mat)
