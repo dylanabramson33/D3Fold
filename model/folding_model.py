@@ -1,18 +1,11 @@
 import torch
 from torch import nn
 from mamba_ssm import Mamba
-from torch.nn import functional as F
 
 import esm
 from torch_geometric.nn import radius_graph
+import lightning as L
 
-from os import listdir
-from mamba_ssm import Mamba
-from torch.nn import functional as F
-
-from os import listdir
-from mamba_ssm import Mamba
-from torch.nn import functional as F
 from model.losses import contact_loss, sequence_loss
 
 class FoldingTrunk(nn.Module):
@@ -26,14 +19,13 @@ class FoldingTrunk(nn.Module):
             d_state=16,  # SSM state expansion factor
             d_conv=4,    # Local convolution width
             expand=2,    # Block expansion factor
-        ).to("cuda")
+        )
 
     def outer_product(self, x, y):
       return torch.einsum("bsf,btf->bstf", x, y)
 
     def forward(self, s, z):
         s_prime = self.s_project(s)
-        s_prime = self.mamba(s_prime)
         z_prime = self.z_project(z)
         z_prime = z_prime + self.outer_product(s_prime, s_prime)
         return s_prime, z_prime
@@ -96,17 +88,20 @@ class D3Fold(L.LightningModule):
         att_contacts = att_contacts.squeeze(-1)
         return s, z
 
+    def get_masked_indices(self, batch, attribute=None):
+        mask = batch[attribute].isnan() is False
+        indices = mask.nonzero()
+        return indices
+
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
         distance_mat = self.get_distance_matrix(batch)
-        loss = 0 
-        seq_mask = batch.
+        loss = 0
         for loss_fn in self.losses:
-            if loss.representation_target == "pair":
-                loss += loss_fn(z, distance_mat)
-            elif loss.representation_target == "seq":
-                loss += loss_fn(s, batch.seq)
-            
+            if loss_fn.representation_target == "seq":
+                masked_indices = self.get_masked_indices(batch, attribute="seq")
+                loss += loss_fn(s[masked_indices], batch.seq_masked)
+
         self.log("train_loss", loss)
         return loss
 

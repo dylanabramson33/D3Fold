@@ -162,7 +162,7 @@ class Chain:
               np_mask = mask.numpy()
               field_data.mask_data(np_mask)
 
-        return self
+        return mask
     
     def random_crop_mask(self, crop_len=400):
         start = random.randint(0, len(self.coords.data) - crop_len)
