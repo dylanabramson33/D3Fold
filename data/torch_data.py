@@ -108,9 +108,14 @@ def collate_chains(data_list):
     del batch_data.coords_ptr
 
     for key in seq_data_list[0].keys():
-        seq = pad_sequence(
-            [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
-        )
+        if key == "mask":
+            seq = pad_sequence(
+                [d[key] for d in seq_data_list], batch_first=True, padding_value=False
+            )
+        else:
+            seq = pad_sequence(
+                [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
+            )
         batch_data[key] = seq
     _, _, batch_tokens = batch_converter(raw_seq_data_list)
     batch_data.tokens = batch_tokens
