@@ -33,7 +33,7 @@ class FoldingTrunk(nn.Module):
 class D3Fold(L.LightningModule):
     def __init__(self, mamba_layers=3, freeze_esm=False):
         super().__init__()
-        self.losses = [contact_loss, sequence_loss]
+        self.losses = [sequence_loss]
         model, _ = esm.pretrained.esm2_t33_650M_UR50D()
         self.esm = model
         if freeze_esm:
@@ -48,6 +48,7 @@ class D3Fold(L.LightningModule):
         )
 
         self.final_z_proj = nn.Linear(32, 1)
+        self.final_s_proj = nn.Linear(32, 21)
 
     @staticmethod
     def get_distance_matrix(data, r=10):
@@ -69,7 +70,7 @@ class D3Fold(L.LightningModule):
           # if shape is less than max pad with zeros
           if contacts.shape[0] < largest_graph:
               contacts = torch.nn.functional.pad(contacts, (0, largest_graph - contacts.shape[0], 0, largest_graph - contacts.shape[1]))
-              # add in diagonal
+
           sequence_of_contacts[i] = contacts
           current_graph_index += graph_sizes[i]
 
@@ -85,22 +86,24 @@ class D3Fold(L.LightningModule):
         rep = seq_embed['representations'][33][:,1:-1]
         s, z = self.folding_trunk(rep, att_contacts)
         z = self.final_z_proj(z).squeeze(-1)
+        s = self.final_s_proj(s)
+        s = s.softmax(dim=-1)
         att_contacts = att_contacts.squeeze(-1)
         return s, z
-
-    def get_masked_indices(self, batch, attribute=None):
-        mask = batch[attribute].isnan() is False
-        indices = mask.nonzero()
-        return indices
 
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
         distance_mat = self.get_distance_matrix(batch)
         loss = 0
         for loss_fn in self.losses:
+            # this is shit but on right track
             if loss_fn.representation_target == "seq":
-                masked_indices = self.get_masked_indices(batch, attribute="seq")
-                loss += loss_fn(s[masked_indices], batch.seq_masked)
+                mask = batch.mask
+                target_seq = batch.seq
+                target_seq[~mask] = -100
+                target_seq = target_seq.long()
+                s = s.permute(0, 2, 1)
+                loss += loss_fn(s, target_seq)
 
         self.log("train_loss", loss)
         return loss
@@ -108,4 +111,3 @@ class D3Fold(L.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4)
         return optimizer
-    

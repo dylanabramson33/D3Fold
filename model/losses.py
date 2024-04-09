@@ -29,8 +29,5 @@ class StructuredLoss(LossFn):
     def __call__(self, y_pred, y_true):
         return self.loss_fn(y_pred, y_true)
 
-def masked_sequence_loss(y_pred, y_true, mask):
-    return nn.CrossEntropyLoss()(y_pred, y_true, mask)
-
 contact_loss = PairwiseLoss(nn.BCEWithLogitsLoss())
-sequence_loss = SequenceLoss(masked_sequence_loss)
+sequence_loss = SequenceLoss(nn.CrossEntropyLoss())
