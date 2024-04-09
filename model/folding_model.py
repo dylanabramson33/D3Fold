@@ -35,23 +35,7 @@ class FoldingTrunk(nn.Module):
 class IPA(nn.Module):
     def __init__(self, s_dim_in=32, s_dim_out=32, z_dim_in=32, z_dim_out=32):
         super().__init__()
-        self.s_project = nn.Linear(s_dim_in, s_dim_out)
-        self.z_project = nn.Linear(z_dim_in, z_dim_out)
-        self.mamba = Mamba(
-            d_model=s_dim_out, # Model dimension d_model
-            d_state=16,  # SSM state expansion factor
-            d_conv=4,    # Local convolution width
-            expand=2,    # Block expansion factor
-        )
 
-    def outer_product(self, x, y):
-      return torch.einsum("bsf,btf->bstf", x, y)
-
-    def forward(self, s, z):
-        s_prime = self.s_project(s)
-        z_prime = self.z_project(z)
-        z_prime = z_prime + self.outer_product(s_prime, s_prime)
-        return s_prime, z_prime
 
 class D3Fold(L.LightningModule):
     def __init__(self, mamba_layers=3, freeze_esm=False):
@@ -110,10 +94,8 @@ class D3Fold(L.LightningModule):
         return torch.stack(stack, dim=-1)
 
     def forward(self, batch):
-        coords = batch.coords
         esm_seq = batch.tokens
         seq_embed = self.esm(esm_seq.long(), repr_layers=[33], return_contacts=True)
-        files = batch.file
         # attention based contacts
         att_contacts = seq_embed['contacts'].unsqueeze(-1)
         rep = seq_embed['representations'][33][:,1:-1]

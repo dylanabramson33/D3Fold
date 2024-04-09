@@ -108,8 +108,8 @@ COORD = ProteinDataType("COORD", pad_type="torch_geometric", mask_template=coord
 seq_mask = torch.ones(1) * torch.nan
 SEQ = ProteinDataType("SEQ", pad_type="seq", mask_template=seq_mask)
 
-FRAME_R = ProteinDataType("FRAME_R", pad_type="torch_geometric", mask_template=None)
-FRAME_T = ProteinDataType("FRAME_T", pad_type="torch_geometric", mask_template=None)
+FRAME_R = ProteinDataType("FRAME_R", pad_type="seq", mask_template=None)
+FRAME_T = ProteinDataType("FRAME_T", pad_type="seq", mask_template=None)
 
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)

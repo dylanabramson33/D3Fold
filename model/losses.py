@@ -27,4 +27,10 @@ def masked_sequence_loss(y_pred, y_true, mask=None):
 
     return loss_fn(y_pred, y_true)
 
+def masked_pairwise_loss(y_pred, y_true, mask=None):
+    loss_fn = nn.BCEWithLogitsLoss()
+    y_true[~mask] = 0
+    y_pred[~mask] = 0
+    return loss_fn(y_pred, y_true)
+
 sequence_loss = SequenceLoss(masked_sequence_loss)
