@@ -77,16 +77,10 @@ class SingleChainData(Dataset):
             field_data = getattr(chain, field)
             if field_data.type_.pad_type == "torch_geometric":
                 geo_data[field] = field_data.data
-                if self.use_mask and field not in self.ignore_mask_fields:
-                    geo_data[f"{field}_masked"] = field_data.masked_data
             elif field_data.type_.pad_type == "seq":
                 seq_data[field] = field_data.data
-                if self.use_mask and field not in self.ignore_mask_fields:
-                    seq_data[f"{field}_masked"] = field_data.masked_data
             elif field_data.type_.pad_type == "esm":
                 raw_seq_data[field] = field_data.data
-                if self.use_mask and field not in self.ignore_mask_fields:
-                    raw_seq_data[f"{field}_masked"] = field_data.masked_data
 
         seq_data["mask"] = mask
         geo_data = Data.from_dict(geo_data)
