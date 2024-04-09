@@ -5,8 +5,9 @@ from mamba_ssm import Mamba
 import esm
 from torch_geometric.nn import radius_graph
 import lightning as L
+import numpy as np
 
-from model.losses import contact_loss, sequence_loss
+from model.losses import sequence_loss
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
@@ -14,6 +15,28 @@ class FoldingTrunk(nn.Module):
         self.s_project = nn.Linear(s_dim_in, s_dim_out)
         self.z_project = nn.Linear(z_dim_in, z_dim_out)
         # this is black magic rn, I have no idea what Mamba does
+        self.mamba = Mamba(
+            d_model=s_dim_out, # Model dimension d_model
+            d_state=16,  # SSM state expansion factor
+            d_conv=4,    # Local convolution width
+            expand=2,    # Block expansion factor
+        )
+
+    def outer_product(self, x, y):
+      return torch.einsum("bsf,btf->bstf", x, y)
+
+    def forward(self, s, z):
+        s_prime = self.s_project(s)
+        z_prime = self.z_project(z)
+        z_prime = z_prime + self.outer_product(s_prime, s_prime)
+        return s_prime, z_prime
+
+
+class IPA(nn.Module):
+    def __init__(self, s_dim_in=32, s_dim_out=32, z_dim_in=32, z_dim_out=32):
+        super().__init__()
+        self.s_project = nn.Linear(s_dim_in, s_dim_out)
+        self.z_project = nn.Linear(z_dim_in, z_dim_out)
         self.mamba = Mamba(
             d_model=s_dim_out, # Model dimension d_model
             d_state=16,  # SSM state expansion factor
@@ -76,6 +99,16 @@ class D3Fold(L.LightningModule):
 
       return sequence_of_contacts
 
+    @staticmethod
+    def get_distance_mat_stack(data, min_radius=5, max_radius=20, num_radii=4):
+        radius_list = np.linspace(min_radius, max_radius, num_radii)
+        stack = []
+        for r in radius_list:
+            mat = D3Fold.get_distance_matrix(data, r=r)
+            stack.append(mat)
+
+        return torch.stack(stack, dim=-1)
+
     def forward(self, batch):
         coords = batch.coords
         esm_seq = batch.tokens
@@ -93,18 +126,14 @@ class D3Fold(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
-        distance_mat = self.get_distance_matrix(batch)
+        distance_mats = self.get_distance_mat_stack(batch)
         loss = 0
         for loss_fn in self.losses:
             # this is shit but on right track
             if loss_fn.representation_target == "seq":
-                mask = batch.mask
-                target_seq = batch.seq
-                target_seq[~mask] = -100
-                target_seq = target_seq.long()
-                s = s.permute(0, 2, 1)
-                loss += loss_fn(s, target_seq)
-
+                loss += loss_fn(s, batch.seq, mask=batch.mask)
+            if loss_fn.representation_target == "pair":
+                loss += loss_fn(z, distance_mats)
         self.log("train_loss", loss)
         return loss
 

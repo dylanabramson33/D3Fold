@@ -50,8 +50,8 @@ def download_inverse_folding_data(path_to_split_file, path_to_file):
     test_ids = list(test.keys())
 
     with ThreadPoolExecutor(max_workers=5) as executor:
-        results_train = list(executor.map(download_pdb_files, train_ids))
-        results_test = list(executor.map(download_pdb_files, test_ids))
+        list(executor.map(download_pdb_files, train_ids))
+        list(executor.map(download_pdb_files, test_ids))
 
 # Main script execution
 if __name__ == "__main__":
