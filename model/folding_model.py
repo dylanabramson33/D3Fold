@@ -8,6 +8,8 @@ import lightning as L
 import numpy as np
 
 from model.losses import sequence_loss
+from invariant_point_attention import InvariantPointAttention
+
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
@@ -33,8 +35,18 @@ class FoldingTrunk(nn.Module):
 
 
 class IPA(nn.Module):
-    def __init__(self, s_dim_in=32, s_dim_out=32, z_dim_in=32, z_dim_out=32):
-        super().__init__()
+    def __init__(self, dim=32):
+        self.ipa = InvariantPointAttention(
+            dim=dim,
+            heads=8,
+            scalar_key_dim=16,
+            scalar_value_dim=16,
+            point_key_dim=4,
+            point_value_dim=4
+        )
+
+    def forward(self, s, z, data):
+        return self.ipa(s, z, rotations=data.frames_R, translations=data.frames_t, mask=data.mask)
 
 
 class D3Fold(L.LightningModule):
