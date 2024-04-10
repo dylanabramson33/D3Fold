@@ -69,7 +69,7 @@ def construct_ipa_frames(backbone_struct, ca_struct):
     return frames, residue_mask
 
 class ProteinDataType:
-    def __init__(self, type=None, pad_type="torch_geo", mask_template=None):
+    def __init__(self, type=None, pad_type="torch_geometric", mask_template=None):
         self.type = type
         self.mask_template = mask_template
         self.pad_type = pad_type
