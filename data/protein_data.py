@@ -103,7 +103,7 @@ class ProteinData():
         return str(self.data)
 
 coord_mask = torch.ones(3) * torch.nan
-COORD = ProteinDataType("COORD", pad_type="seq", mask_template=coord_mask)
+COORD = ProteinDataType("COORD", pad_type="torch_geometric", mask_template=coord_mask)
 
 seq_mask = torch.ones(1) * torch.nan
 SEQ = ProteinDataType("SEQ", pad_type="seq", mask_template=seq_mask)
