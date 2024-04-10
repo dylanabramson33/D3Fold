@@ -150,7 +150,9 @@ class Chain:
         raw_seq = ProteinData(raw_seq, RAW_SEQ)
         return cls(coords, seq, frames_R, frames_t, raw_seq)
 
-    def mask_data(self, mask_prob=0.1, ignore_mask_fields=[]):
+    def mask_data(self, mask_prob=0.1, ignore_mask_fields=None):
+        if  ignore_mask_fields is None:
+          ignore_mask_fields = []
         mask = torch.rand(self.coords.data.shape[0]) < mask_prob
         for field in self.__dataclass_fields__.keys():
             if field in ignore_mask_fields:
