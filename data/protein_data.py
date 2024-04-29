@@ -6,7 +6,6 @@ import numpy as np
 import torch
 from biotite import structure
 import biotite.structure.io.pdb as pdb
-from biotite.structure import AtomArray as AA
 
 from data.constants import THREE_TO_IND, THREE_TO_ONE
 
