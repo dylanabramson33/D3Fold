@@ -38,7 +38,40 @@ PICO_TO_ANGSTROM = 0.01
 
 PDB_CHAIN_IDS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 PDB_MAX_CHAINS = len(PDB_CHAIN_IDS)
-assert(PDB_MAX_CHAINS == 62)
+
+class ProteinDataType:
+    def __init__(self, type=None, pad_type="torch_geometric", mask_template=None):
+        self.type = type
+        self.mask_template = mask_template
+        self.pad_type = pad_type
+
+    def __repr__(self):
+        return self.type
+
+    def __str__(self):
+        return self.type
+
+@dataclasses.dataclass
+class ProteinData():
+    data: torch.Tensor
+    type_: ProteinDataType
+    masked_data: torch.Tensor = None
+
+    def mask_data(self, mask):
+        if self.type_.mask_template is None:
+            return self.data
+        if type(mask) is np.ndarray:
+          self.masked_data = self.data.copy()
+        elif type(mask) is torch.Tensor:
+           self.masked_data = self.data.clone()
+        self.masked_data = self.masked_data[mask]
+        self.data[mask] = self.type_.mask_template
+
+    def __repr__(self):
+        return str(self.data)
+
+    def __str__(self):
+        return str(self.data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -225,7 +258,7 @@ def from_proteinnet_string(proteinnet_str: str) -> Protein:
             atom_mask = np.zeros(
                 (len(mask), residue_constants.atom_type_num,)
             ).astype(np.float32)
-            for i, atom in enumerate(atoms):
+            for atom in atoms:
                 atom_mask[:, residue_constants.atom_order[atom]] = 1
             atom_mask *= mask[..., None]
 
@@ -298,7 +331,8 @@ def add_pdb_headers(prot: Protein, pdb_str: str) -> str:
     else:
         parents_per_chain = [["N/A"]]
 
-    make_parent_line = lambda p: f"PARENT {' '.join(p)}"
+    def make_parent_line(p):
+        return f"PARENT {' '.join(p)}"
 
     out_pdb_lines.append(make_parent_line(parents_per_chain[0]))
 
@@ -729,7 +763,8 @@ def np_to_tensor_dict(
     """
     # torch generates warnings if feature is already a torch Tensor
     features = [f for f in features if f not in ["sequence", "domain_name"]]
-    to_tensor = lambda t: torch.tensor(t) if type(t) != torch.Tensor else t.clone().detach()
+    def to_tensor(t):
+        return torch.tensor(t) if type(t) != torch.Tensor else t.clone().detach()
     tensor_dict = {
         k: to_tensor(v) for k, v in np_example.items() if k in features
     }
