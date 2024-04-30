@@ -36,6 +36,51 @@ class ProteinData():
         self.masked_data = self.masked_data[mask]
         self.data[mask] = self.type_.mask_template
 
+    def random_crop_mask(self, crop_len=400):
+      start = random.randint(0, len(self.data) - crop_len)
+      end = start + crop_len
+      mask = torch.zeros(len(self.data))
+      mask[start:end] = 1
+      return mask.bool()
+
+    def center_crop_mask(self, crop_len=400):
+        start = len(self.coords.data) // 2 - crop_len // 2
+        end = start + crop_len
+        mask = torch.zeros(len(self.coords.data))
+        mask[start:end] = 1
+        return mask.bool()
+
+    def crop_data(self, crop_strategy="mix", crop_len=400):
+      if len(self.coords.data) < crop_len or self.type_.meta_data:
+        return
+
+      crop_fns = {
+        "random": self.random_crop_mask,
+        "center": self.center_crop_mask
+      }
+
+      if crop_strategy == "random":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "center":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "mix":
+        # randomly select strategy
+        crop_strategy = random.choice(list(crop_fns.keys()))
+        mask = crop_fns[crop_strategy](crop_len)
+      else:
+        raise ValueError("Invalid crop strategy")
+
+      for field in self.__dataclass_fields__.keys():
+        if field.type_.meta_:
+          continue
+
+        field_data = getattr(self, field)
+        if type(field_data.data) is torch.Tensor:
+          field_data.data = field_data.data[mask]
+        if type(field_data.data) is np.ndarray:
+          np_mask = mask.numpy()
+          field_data.data = field_data.data[np_mask]
+
     def __repr__(self):
         return str(self.data)
 
@@ -107,51 +152,6 @@ class TorchProtein:
     backbone_rigid_mask: ProteinData
     chi_angles_sin_cos: ProteinData
     chi_mask: ProteinData
-    
-    def random_crop_mask(self, crop_len=400):
-        start = random.randint(0, len(self.coords.data) - crop_len)
-        end = start + crop_len
-        mask = torch.zeros(len(self.coords.data))
-        mask[start:end] = 1
-        return mask.bool()
-
-    def center_crop_mask(self, crop_len=400):
-        start = len(self.coords.data) // 2 - crop_len // 2
-        end = start + crop_len
-        mask = torch.zeros(len(self.coords.data))
-        mask[start:end] = 1
-        return mask.bool()
-
-    def crop_data(self, crop_strategy="mix", crop_len=400):
-      if len(self.coords.data) < crop_len:
-        return
-      
-      crop_fns = {
-        "random": self.random_crop_mask,
-        "center": self.center_crop_mask
-      }
-
-      if crop_strategy == "random":
-        mask = crop_fns[crop_strategy](crop_len)
-      elif crop_strategy == "center":
-        mask = crop_fns[crop_strategy](crop_len)
-      elif crop_strategy == "mix":
-        # randomly select strategy
-        crop_strategy = random.choice(list(crop_fns.keys()))
-        mask = crop_fns[crop_strategy](crop_len)
-      else:
-        raise ValueError("Invalid crop strategy")
-      
-      for field in self.__dataclass_fields__.keys():
-        if field.type_.meta_:
-          continue
-
-        field_data = getattr(self, field)
-        if type(field_data.data) is torch.Tensor:
-          field_data.data = field_data.data[mask]
-        if type(field_data.data) is np.ndarray:
-          np_mask = mask.numpy()
-          field_data.data = field_data.data[np_mask]
 
     @classmethod
     def from_dict(cls, data_dict):
@@ -185,3 +185,17 @@ class TorchProtein:
         chi_angles_sin_cos=ProteinData(data_dict["chi_angles_sin_cos"], CHI_ANGLES_SIN_COS),
         chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
       )
+
+    def mask_fields(self, ignore_mask_fields):
+        for field in self.__dataclass_fields__.keys():
+          if field in ignore_mask_fields:
+              continue
+          field_data = getattr(self, field)
+          field_data.mask_data()
+
+    def crop_fields(self, ignore_mask_fields=()):
+        for field in self.__dataclass_fields__.keys():
+          if field in ignore_mask_fields:
+              continue
+          field_data = getattr(self, field)
+          field_data.crop_data()

@@ -23,10 +23,8 @@ class SingleChainData(Dataset):
         limit_by=None,
         use_mask=True,
         use_crop=True,
-        ignore_mask_fields=None,
+        ignore_mask_fields=()
     ):
-        if ignore_mask_fields is None:
-            ignore_mask_fields = []
     
         self.chain_dir = chain_dir
         self.pickled_dir = pickled_dir
@@ -69,7 +67,7 @@ class SingleChainData(Dataset):
 
         data_fields = list(chain.__dataclass_fields__.keys())
         if self.use_crop:
-            chain.crop_data()
+            chain.crop_fields()
         if self.use_mask:
             mask = chain.mask_data(ignore_mask_fields=self.ignore_mask_fields)
 
