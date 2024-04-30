@@ -676,7 +676,7 @@ def np_to_tensor_dict(
     """
     # torch generates warnings if feature is already a torch Tensor
     def to_tensor(t):
-        if np.issubdtype(t.dtype, np.str_):
+        if np.issubdtype(t.dtype, np.str_) or np.issubdtype(t.dtype, np.object_):
             return t
 
         return torch.tensor(t) if type(t) != torch.Tensor else t.clone().detach()
