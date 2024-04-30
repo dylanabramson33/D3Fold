@@ -46,7 +46,7 @@ class ProteinData():
     def center_crop_mask(self, crop_len=400):
         start = len(self.data) // 2 - crop_len // 2
         end = start + crop_len
-        mask = torch.zeros(len(self.coords.data))
+        mask = torch.zeros(len(self.data))
         mask[start:end] = 1
         return mask.bool()
 
