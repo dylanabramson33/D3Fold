@@ -193,7 +193,7 @@ class TorchProtein:
           field_data = getattr(self, field)
           field_data.mask_data()
 
-    def crop_fields(self, ignore_mask_fields=()):
+    def crop_fields(self, ignore_mask_fields=(), crop_strategy="mix", crop_len=400):
         for field in self.__dataclass_fields__.keys():
           if field in ignore_mask_fields:
               continue
