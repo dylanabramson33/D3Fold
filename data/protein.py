@@ -25,12 +25,9 @@ class ProteinData():
     masked_data: torch.Tensor = None
 
     def mask_data(self, mask):
-        if self.type_.meta_data:
+        if self.type_.meta_data or self.type_.mask_template is None:
           return
-        if self.type_.mask_template is None:
-            return self.data
 
-        print(self.type_)
         if type(mask) is np.ndarray:
           self.masked_data = self.data.copy()
         elif type(mask) is torch.Tensor:
@@ -53,10 +50,8 @@ class ProteinData():
         return mask.bool()
 
     def crop_data(self, crop_strategy="mix", crop_len=400):
-      print(self.type_)
-      if len(self.data) < crop_len or self.type_.meta_data:
+      if self.type_.meta_data or len(self.data) < crop_len:
         return
-
 
       crop_fns = {
         "random": self.random_crop_mask,
