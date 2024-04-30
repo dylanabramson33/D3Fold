@@ -53,9 +53,10 @@ class ProteinData():
         return mask.bool()
 
     def crop_data(self, crop_strategy="mix", crop_len=400):
+      print(self.type_)
       if len(self.data) < crop_len or self.type_.meta_data:
         return
-      print(self.type_)
+
 
       crop_fns = {
         "random": self.random_crop_mask,
