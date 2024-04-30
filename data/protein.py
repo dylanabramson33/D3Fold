@@ -151,8 +151,9 @@ class TorchProtein:
         chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
       )
 
-    def mask_fields(self, ignore_mask_fields, mask_percent=0.15):
+    def mask_fields(self, ignore_mask_fields=(), mask_percent=0.15):
       num_samples = len(self.aatype.data) * mask_percent
+      num_samples = int(round(num_samples))
       indices = torch.arange(len(self.aatype.data))
       perm = torch.randperm(indices.size(0))
       mask = perm[:num_samples]
