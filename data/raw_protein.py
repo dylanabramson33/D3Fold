@@ -675,8 +675,10 @@ def np_to_tensor_dict(
         features are returned, all other ones are filtered out.
     """
     # torch generates warnings if feature is already a torch Tensor
-    features = [f for f in features if f not in ["sequence", "domain_name"]]
     def to_tensor(t):
+        if np.issubdtype(t.dtype, np.str_):
+            return t
+
         return torch.tensor(t) if type(t) != torch.Tensor else t.clone().detach()
     tensor_dict = {
         k: to_tensor(v) for k, v in np_example.items() if k in features
