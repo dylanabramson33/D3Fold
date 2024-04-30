@@ -115,6 +115,7 @@ class TorchProtein:
     backbone_rigid_mask: ProteinData
     chi_angles_sin_cos: ProteinData
     chi_mask: ProteinData
+    raw_seq: ProteinData
 
 
     @classmethod
@@ -148,6 +149,7 @@ class TorchProtein:
         backbone_rigid_mask=ProteinData(data_dict["backbone_rigid_mask"], BACKBONE_RIGID_MASK),
         chi_angles_sin_cos=ProteinData(data_dict["chi_angles_sin_cos"], CHI_ANGLES_SIN_COS),
         chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
+        raw_seq=ProteinData(data_dict["raw_seq"], RAW_SEQ)
       )
 
     def mask_fields(self, ignore_mask_fields=(), mask_percent=0.15):
