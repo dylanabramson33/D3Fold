@@ -5,10 +5,11 @@ import numpy as np
 import torch
 
 class ProteinDataType:
-    def __init__(self, type=None, pad_type="torch_geometric", mask_template=None):
+    def __init__(self, type=None, pad_type="torch_geometric", mask_template=None, meta_data=False):
         self.type = type
         self.mask_template = mask_template
         self.pad_type = pad_type
+        self.meta_data = meta_data
 
     def __repr__(self):
         return self.type
@@ -24,6 +25,8 @@ class ProteinData():
     masked_data: torch.Tensor = None
 
     def mask_data(self, mask):
+        if self.type_.meta_data:
+          return
         if self.type_.mask_template is None:
             return self.data
         if type(mask) is np.ndarray:
@@ -40,26 +43,70 @@ class ProteinData():
         return str(self.data)
     
 
-coord_mask = torch.ones(3) * torch.nan
-COORD = ProteinDataType("COORD", pad_type="torch_geometric", mask_template=coord_mask)
-
-seq_mask = torch.ones(1) * torch.nan
-SEQ = ProteinDataType("SEQ", pad_type="seq", mask_template=seq_mask)
-
-FRAME_R = ProteinDataType("FRAME_R", pad_type="seq", mask_template=None)
-FRAME_T = ProteinDataType("FRAME_T", pad_type="seq", mask_template=None)
-
+AA_TYPE = ProteinDataType("AA_TYPE", pad_type="seq", mask_template=None)
+RES_INDEX = ProteinDataType("RES_INDEX", pad_type="seq", mask_template=None)
+SEQ_LENGTH = ProteinDataType("SEQ_LENGTH", pad_type="seq", mask_template=None, meta_data=True)
+AA_POSITIONS = ProteinDataType("AA_POSITIONS", pad_type="seq", mask_template=None)
+ALL_ATOM_MASK = ProteinDataType("ALL_ATOM_MASK", pad_type="seq", mask_template=None)
+RESOLUTION = ProteinDataType("RESOLUTION", pad_type="seq", mask_template=None, meta_data=True)
+IS_DISTILLATION = ProteinDataType("IS_DISTILLATION", pad_type="seq", mask_template=None, meta_data=True)
+ATOM14_EXISTS = ProteinDataType("ATOM_14_EXISTS", pad_type="seq", mask_template=None)
+RESIDX_ATOM14_TO_ATOM37 = ProteinDataType("RESIDX_ATOM14_TO_ATOM37", pad_type="seq", mask_template=None)
+RESIDX_ATOM37_TO_ATOM14 = ProteinDataType("RESIDX_ATOM37_TO_ATOM14", pad_type="seq", mask_template=None)
+ATOM37_ATOM_EXISTS = ProteinDataType("ATOM37_ATOM_EXISTS", pad_type="seq", mask_template=None)
+ATOM14_GT_EXISTS = ProteinDataType("ATOM14_GT_EXISTS", pad_type="seq", mask_template=None)
+ATOM14_GT_POSITIONS = ProteinDataType("ATOM14_GT_POSITIONS", pad_type="seq", mask_template=None)
+ATOM14_ALT_GT_POSITIONS = ProteinDataType("ATOM14_ALT_GT_POSITIONS", pad_type="seq", mask_template=None)
+ATOM14_ALT_GT_EXISTS = ProteinDataType("ATOM14_ALT_GT_EXISTS", pad_type="seq", mask_template=None)
+ATOM14_ATOM_IS_AMBIGUOUS = ProteinDataType("ATOM14_ATOM_IS_AMBIGUOUS", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GT_FRAMES = ProteinDataType("RIGIDGROUPS_GT_FRAMES", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GT_EXISTS = ProteinDataType("RIGIDGROUPS_GT_EXISTS", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GROUP_EXISTS = ProteinDataType("RIGIDGROUPS_GROUP_EXISTS", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GROUP_IS_AMBIGUOUS = ProteinDataType("RIGIDGROUPS_GROUP_IS_AMBIGUOUS", pad_type="seq", mask_template=None)
+RIGIDGROUPS_ALT_GT_FRAMES = ProteinDataType("RIGIDGROUPS_ALT_GT_FRAMES", pad_type="seq", mask_template=None)
+TORSION_ANGLES_SIN_COS = ProteinDataType("TORSION_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
+ALT_TORSION_ANGLES_SIN_COS = ProteinDataType("ALT_TORSION_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
+TORSION_ANGLES_MASK = ProteinDataType("TORSION_ANGLES_MASK", pad_type="seq", mask_template=None)
+PSEUDO_BETA = ProteinDataType("PSEUDO_BETA", pad_type="seq", mask_template=None)
+PSEUDO_BETA_MASK = ProteinDataType("PSEUDO_BETA_MASK", pad_type="seq", mask_template=None)
+BACKBONE_RIGID_TENSOR = ProteinDataType("BACKBONE_RIGID_TENSOR", pad_type="seq", mask_template=None)
+BACKBONE_RIGID_MASK = ProteinDataType("BACKBONE_RIGID_MASK", pad_type="seq", mask_template=None)
+CHI_ANGLES_SIN_COS = ProteinDataType("CHI_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
+CHI_MASK = ProteinDataType("CHI_MASK", pad_type="seq", mask_template=None)
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
 
 
 @dataclass
 class TorchProtein:
-    coords: ProteinData
-    seq: ProteinData
-    frames_R: ProteinData
-    frames_t: ProteinData
-    raw_seq: ProteinData
+    aatype: ProteinData
+    residue_index: ProteinData
+    all_atom_positions: ProteinData
+    all_atom_mask: ProteinData
+    resolution: ProteinData
+    is_distillation: ProteinData
+    atom14_atom_exists: ProteinData
+    residx_atom14_to_atom37: ProteinData
+    residx_atom37_to_atom14: ProteinData
+    atom37_atom_exists: ProteinData
+    atom14_gt_exists: ProteinData
+    atom14_gt_positions: ProteinData
+    atom14_alt_gt_positions: ProteinData
+    atom14_alt_gt_exists: ProteinData
+    rigidgroups_gt_frames: ProteinData
+    rigidgroups_gt_exists: ProteinData
+    rigidgroups_gt_group_exists: ProteinData
+    rigidgroups_gt_group_is_ambiguous: ProteinData
+    rigidgroups_alt_gt_frames: ProteinData
+    torsion_angles_sin_cos: ProteinData
+    alt_torsion_angles_sin_cos: ProteinData
+    torsion_angles_mask: ProteinData
+    pseudo_beta: ProteinData
+    pseudo_beta_mask: ProteinData
+    backbone_rigid_tensor: ProteinData
+    backbone_rigid_mask: ProteinData
+    chi_angles_sin_cos: ProteinData
+    chi_mask: ProteinData
     
     def random_crop_mask(self, crop_len=400):
         start = random.randint(0, len(self.coords.data) - crop_len)
@@ -96,9 +143,45 @@ class TorchProtein:
         raise ValueError("Invalid crop strategy")
       
       for field in self.__dataclass_fields__.keys():
+        if field.type_.meta_:
+          continue
+
         field_data = getattr(self, field)
         if type(field_data.data) is torch.Tensor:
           field_data.data = field_data.data[mask]
         if type(field_data.data) is np.ndarray:
           np_mask = mask.numpy()
           field_data.data = field_data.data[np_mask]
+
+    @classmethod
+    def from_dict(cls, data_dict):
+      return cls(
+        aatype=ProteinData(data_dict["aatype"], AA_TYPE),
+        residue_index=ProteinData(data_dict["residue_index"], RES_INDEX),
+        all_atom_positions=ProteinData(data_dict["all_atom_positions"], AA_POSITIONS),
+        all_atom_mask=ProteinData(data_dict["all_atom_mask"], ALL_ATOM_MASK),
+        resolution=ProteinData(data_dict["resolution"], RESOLUTION),
+        is_distillation=ProteinData(data_dict["is_distillation"], IS_DISTILLATION),
+        atom14_atom_exists=ProteinData(data_dict["atom14_atom_exists"], ATOM14_EXISTS),
+        residx_atom14_to_atom37=ProteinData(data_dict["residx_atom14_to_atom37"], RESIDX_ATOM14_TO_ATOM37),
+        residx_atom37_to_atom14=ProteinData(data_dict["residx_atom37_to_atom14"], RESIDX_ATOM37_TO_ATOM14),
+        atom37_atom_exists=ProteinData(data_dict["atom37_atom_exists"], ATOM37_ATOM_EXISTS),
+        atom14_gt_exists=ProteinData(data_dict["atom14_gt_exists"], ATOM14_GT_EXISTS),
+        atom14_gt_positions=ProteinData(data_dict["atom14_gt_positions"], ATOM14_GT_POSITIONS),
+        atom14_alt_gt_positions=ProteinData(data_dict["atom14_alt_gt_positions"], ATOM14_ALT_GT_POSITIONS),
+        atom14_alt_gt_exists=ProteinData(data_dict["atom14_alt_gt_exists"], ATOM14_ALT_GT_EXISTS),
+        rigidgroups_gt_frames=ProteinData(data_dict["rigidgroups_gt_frames"], RIGIDGROUPS_GT_FRAMES),
+        rigidgroups_gt_exists=ProteinData(data_dict["rigidgroups_gt_exists"], RIGIDGROUPS_GT_EXISTS),
+        rigidgroups_gt_group_exists=ProteinData(data_dict["rigidgroups_gt_group_exists"], RIGIDGROUPS_GROUP_EXISTS),
+        rigidgroups_gt_group_is_ambiguous=ProteinData(data_dict["rigidgroups_gt_group_is_ambiguous"], RIGIDGROUPS_GROUP_IS_AMBIGUOUS),
+        rigidgroups_alt_gt_frames=ProteinData(data_dict["rigidgroups_alt_gt_frames"], RIGIDGROUPS_ALT_GT_FRAMES),
+        torsion_angles_sin_cos=ProteinData(data_dict["torsion_angles_sin_cos"], TORSION_ANGLES_SIN_COS),
+        alt_torsion_angles_sin_cos=ProteinData(data_dict["alt_torsion_angles_sin_cos"], ALT_TORSION_ANGLES_SIN_COS),
+        torsion_angles_mask=ProteinData(data_dict["torsion_angles_mask"], TORSION_ANGLES_MASK),
+        pseudo_beta=ProteinData(data_dict["pseudo_beta"], PSEUDO_BETA),
+        pseudo_beta_mask=ProteinData(data_dict["pseudo_beta_mask"], PSEUDO_BETA_MASK),
+        backbone_rigid_tensor=ProteinData(data_dict["backbone_rigid_tensor"], BACKBONE_RIGID_TENSOR),
+        backbone_rigid_mask=ProteinData(data_dict["backbone_rigid_mask"], BACKBONE_RIGID_MASK),
+        chi_angles_sin_cos=ProteinData(data_dict["chi_angles_sin_cos"], CHI_ANGLES_SIN_COS),
+        chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
+      )
