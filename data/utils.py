@@ -1,6 +1,19 @@
 import json
 import os 
 
+from openfold.np import residue_constants
+from Bio.PDB import PDBParser
+import numpy as np
+import modelcif
+import modelcif.model
+import modelcif.dumper
+import modelcif.reference
+import modelcif.protocol
+import modelcif.alignment
+import modelcif.qa_metric
+
+
+
 def process_protein_inv(path_to_split_file, path_to_file):
     """
     process the protein inverse folding dataset and save pdb id and chain pairs to a file
