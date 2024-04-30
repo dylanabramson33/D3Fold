@@ -265,7 +265,7 @@ def add_pdb_headers(prot: RawProtein, pdb_str: str) -> str:
     return '\n'.join(out_pdb_lines)
 
 
-def to_pdb(prot: Protein) -> str:
+def to_pdb(prot: RawProtein) -> str:
     """Converts a `Protein` instance to a PDB string.
 
     Args:
