@@ -109,32 +109,6 @@ def squeeze_features(protein):
     return protein
 
 
-def unsorted_segment_sum(data, segment_ids, num_segments):
-    """
-    Computes the sum along segments of a tensor. Similar to 
-    tf.unsorted_segment_sum, but only supports 1-D indices.
-
-    :param data: A tensor whose segments are to be summed.
-    :param segment_ids: The 1-D segment indices tensor.
-    :param num_segments: The number of segments.
-    :return: A tensor of same data type as the data argument.
-    """
-    assert (
-        len(segment_ids.shape) == 1 and
-        segment_ids.shape[0] == data.shape[0]
-    )
-    segment_ids = segment_ids.view(
-        segment_ids.shape[0], *((1,) * len(data.shape[1:]))
-    )
-    segment_ids = segment_ids.expand(data.shape)
-    shape = [num_segments] + list(data.shape[1:])
-    tensor = (
-        torch.zeros(*shape, device=segment_ids.device)
-        .scatter_add_(0, segment_ids, data.float())
-    )
-    tensor = tensor.type(data.dtype)
-    return tensor
-
 def pseudo_beta_fn(aatype, all_atom_positions, all_atom_mask):
     """Create pseudo beta features."""
     is_gly = torch.eq(aatype, rc.restype_order["G"])
@@ -154,6 +128,7 @@ def pseudo_beta_fn(aatype, all_atom_positions, all_atom_mask):
     else:
         return pseudo_beta
 
+
 def make_pseudo_beta(protein, prefix=""):
     """Create pseudo-beta (alpha for glycine) position and mask."""
     assert prefix in ["", "template_"]
@@ -167,11 +142,13 @@ def make_pseudo_beta(protein, prefix=""):
     )
     return protein
 
+
 def crop_templates(protein, max_templates):
     for k, v in protein.items():
         if k.startswith("template_"):
             protein[k] = v[:max_templates]
     return protein
+
 
 def make_atom14_masks(protein):
     """Construct denser atom positions (14 dimensions instead of 37)."""
@@ -245,6 +222,7 @@ def make_atom14_masks(protein):
     protein["atom37_atom_exists"] = residx_atom37_mask
 
     return protein
+
 
 def make_atom14_positions(protein):
     """Constructs denser atom positions (14 dimensions instead of 37)."""
