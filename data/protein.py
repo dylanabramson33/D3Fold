@@ -35,39 +35,9 @@ class ProteinData():
         self.masked_data = self.masked_data[mask]
         self.data[mask] = self.type_.mask_template
 
-    def random_crop_mask(self, crop_len=400):
-      start = random.randint(0, len(self.data) - crop_len)
-      end = start + crop_len
-      mask = torch.zeros(len(self.data))
-      mask[start:end] = 1
-      return mask.bool()
-
-    def center_crop_mask(self, crop_len=400):
-        start = len(self.data) // 2 - crop_len // 2
-        end = start + crop_len
-        mask = torch.zeros(len(self.data))
-        mask[start:end] = 1
-        return mask.bool()
-
-    def crop_data(self, crop_strategy="mix", crop_len=400):
+    def crop_data(self, mask, crop_len):
       if self.type_.meta_data or len(self.data) < crop_len:
         return
-
-      crop_fns = {
-        "random": self.random_crop_mask,
-        "center": self.center_crop_mask
-      }
-
-      if crop_strategy == "random":
-        mask = crop_fns[crop_strategy](crop_len)
-      elif crop_strategy == "center":
-        mask = crop_fns[crop_strategy](crop_len)
-      elif crop_strategy == "mix":
-        # randomly select strategy
-        crop_strategy = random.choice(list(crop_fns.keys()))
-        mask = crop_fns[crop_strategy](crop_len)
-      else:
-        raise ValueError("Invalid crop strategy")
 
       if type(self.data) is torch.Tensor:
         self.data = self.data[mask]
@@ -147,6 +117,7 @@ class TorchProtein:
     chi_angles_sin_cos: ProteinData
     chi_mask: ProteinData
 
+
     @classmethod
     def from_dict(cls, data_dict):
       return cls(
@@ -180,16 +151,50 @@ class TorchProtein:
         chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
       )
 
-    def mask_fields(self, ignore_mask_fields):
-        for field in self.__dataclass_fields__.keys():
-          if field in ignore_mask_fields:
-              continue
-          field_data = getattr(self, field)
-          field_data.mask_data()
+    def mask_fields(self, ignore_mask_fields, mask_percent=0.15):
+      num_samples = len(self.aatype.data) * mask_percent
+      indices = torch.arange(len(self.aatype.data))
+      perm = torch.randperm(indices.size(0))
+      mask = perm[:num_samples]
+      for field in self.__dataclass_fields__.keys():
+        if field in ignore_mask_fields:
+            continue
+        field_data = getattr(self, field)
+        field_data.mask_data(mask)
+
+    def random_crop_mask(self, crop_len=400):
+      start = random.randint(0, len(self.data) - crop_len)
+      end = start + crop_len
+      mask = torch.zeros(len(self.data))
+      mask[start:end] = 1
+      return mask.bool()
+
+    def center_crop_mask(self, crop_len=400):
+        start = len(self.data) // 2 - crop_len // 2
+        end = start + crop_len
+        mask = torch.zeros(len(self.data))
+        mask[start:end] = 1
+        return mask.bool()
 
     def crop_fields(self, ignore_mask_fields=(), crop_strategy="mix", crop_len=400):
-        for field in self.__dataclass_fields__.keys():
-          if field in ignore_mask_fields:
-              continue
-          field_data = getattr(self, field)
-          field_data.crop_data(crop_strategy, crop_len)
+      crop_fns = {
+        "random": self.random_crop_mask,
+        "center": self.center_crop_mask
+      }
+
+      if crop_strategy == "random":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "center":
+        mask = crop_fns[crop_strategy](crop_len)
+      elif crop_strategy == "mix":
+        # randomly select strategy
+        crop_strategy = random.choice(list(crop_fns.keys()))
+        mask = crop_fns[crop_strategy](crop_len)
+      else:
+        raise ValueError("Invalid crop strategy")
+
+      for field in self.__dataclass_fields__.keys():
+        if field in ignore_mask_fields:
+            continue
+        field_data = getattr(self, field)
+        field_data.crop_data(mask, crop_len)
