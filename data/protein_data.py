@@ -1,13 +1,11 @@
 from dataclasses import dataclass
-from typing import Callable
 
 import random
 import numpy as np
 import torch
 from biotite import structure
 import biotite.structure.io.pdb as pdb
-
-from data.constants import THREE_TO_IND, THREE_TO_ONE
+from data.residue_constants import THREE_TO_IND, THREE_TO_ONE
 
 def convert_to_resolution(struct, res="CA"):
     chain_data = struct[~struct.hetero]
