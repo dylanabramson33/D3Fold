@@ -51,7 +51,7 @@ class ProteinData():
         return mask.bool()
 
     def crop_data(self, crop_strategy="mix", crop_len=400):
-      if len(self.coords.data) < crop_len or self.type_.meta_data:
+      if len(self.data) < crop_len or self.type_.meta_data:
         return
 
       crop_fns = {
@@ -198,4 +198,4 @@ class TorchProtein:
           if field in ignore_mask_fields:
               continue
           field_data = getattr(self, field)
-          field_data.crop_data()
+          field_data.crop_data(crop_strategy, crop_len)
