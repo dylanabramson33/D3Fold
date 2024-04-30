@@ -172,7 +172,7 @@ class TorchProtein:
         atom14_alt_gt_exists=ProteinData(data_dict["atom14_alt_gt_exists"], ATOM14_ALT_GT_EXISTS),
         rigidgroups_gt_frames=ProteinData(data_dict["rigidgroups_gt_frames"], RIGIDGROUPS_GT_FRAMES),
         rigidgroups_gt_exists=ProteinData(data_dict["rigidgroups_gt_exists"], RIGIDGROUPS_GT_EXISTS),
-        rigidgroups_gt_group_exists=ProteinData(data_dict["rigidgroups_group_exists"], RIGIDGROUPS_GROUP_EXISTS),
+        rigidgroups_group_exists=ProteinData(data_dict["rigidgroups_group_exists"], RIGIDGROUPS_GROUP_EXISTS),
         rigidgroups_gt_group_is_ambiguous=ProteinData(data_dict["rigidgroups_group_is_ambiguous"], RIGIDGROUPS_GROUP_IS_AMBIGUOUS),
         rigidgroups_alt_gt_frames=ProteinData(data_dict["rigidgroups_alt_gt_frames"], RIGIDGROUPS_ALT_GT_FRAMES),
         torsion_angles_sin_cos=ProteinData(data_dict["torsion_angles_sin_cos"], TORSION_ANGLES_SIN_COS),
