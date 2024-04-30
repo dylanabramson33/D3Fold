@@ -30,7 +30,7 @@ import modelcif.reference
 import modelcif.protocol
 import modelcif.alignment
 import modelcif.qa_metric
-
+import torch
 
 FeatureDict = Mapping[str, np.ndarray]
 ModelOutput = Mapping[str, Any]  # Is a nested dict.
