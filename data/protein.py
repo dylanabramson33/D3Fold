@@ -51,8 +51,8 @@ class ProteinData():
     def __str__(self):
         return str(self.data)
     
-
-AA_TYPE = ProteinDataType("AA_TYPE", pad_type="seq", mask_template=None)
+aa_type_mask = torch.tensor(-100)
+AA_TYPE = ProteinDataType("AA_TYPE", pad_type="seq", mask_template=aa_type_mask
 RES_INDEX = ProteinDataType("RES_INDEX", pad_type="seq", mask_template=None)
 SEQ_LENGTH = ProteinDataType("SEQ_LENGTH", pad_type="seq", mask_template=None, meta_data=True)
 AA_POSITIONS = ProteinDataType("AA_POSITIONS", pad_type="seq", mask_template=None)
