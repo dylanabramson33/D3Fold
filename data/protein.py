@@ -70,16 +70,11 @@ class ProteinData():
       else:
         raise ValueError("Invalid crop strategy")
 
-      for field in self.__dataclass_fields__.keys():
-        if field.type_.meta_:
-          continue
-
-        field_data = getattr(self, field)
-        if type(field_data.data) is torch.Tensor:
-          field_data.data = field_data.data[mask]
-        if type(field_data.data) is np.ndarray:
-          np_mask = mask.numpy()
-          field_data.data = field_data.data[np_mask]
+      if type(self.data) is torch.Tensor:
+        self.data = self.data[mask]
+      if type(self.data) is np.ndarray:
+        np_mask = mask.numpy()
+        self.data = self.data[np_mask]
 
     def __repr__(self):
         return str(self.data)
