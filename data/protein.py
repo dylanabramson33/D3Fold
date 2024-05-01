@@ -28,11 +28,8 @@ class ProteinData():
         if self.type_.meta_data or self.type_.mask_template is None:
           return
 
-        if type(mask) is np.ndarray:
-          self.masked_data = self.data.copy()
-        elif type(mask) is torch.Tensor:
-           self.masked_data = self.data.clone()
-        self.masked_data = self.masked_data[mask]
+        if type(self.data) is np.ndarray:
+          mask = mask.numpy()
         self.data[mask] = self.type_.mask_template
 
     def crop_data(self, mask, crop_len):
