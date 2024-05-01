@@ -110,20 +110,23 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            print(key)
-            if "mask" in key:
+            if seq_data_list[0]["key"].shape == ():
+                batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
+            elif "mask" in key:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=False
                 )
+                batch_data[key] = seq
             elif seq_data_list[0][key].dtype in FLOAT_TYPES:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
                 )
+                batch_data[key] = seq
             elif seq_data_list[0][key].dtype in INT_TYPES:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=-1
-            )
-            batch_data[key] = seq
+                )
+                batch_data[key] = seq
         _, _, batch_tokens = batch_converter(raw_seq_data_list)
         batch_data.tokens = batch_tokens
 
