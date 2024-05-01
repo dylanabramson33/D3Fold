@@ -68,7 +68,7 @@ class SingleChainData(Dataset):
         if self.use_crop:
             chain.crop_fields()
         if self.use_mask:
-            mask = chain.mask_data(ignore_mask_fields=self.ignore_mask_fields)
+            mask = chain.mask_fields(ignore_mask_fields=self.ignore_mask_fields)
 
         geo_data = {}
         seq_data = {}
