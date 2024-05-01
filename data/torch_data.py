@@ -84,7 +84,6 @@ class SingleChainData(Dataset):
 
         seq_data["mask"] = mask
         geo_data = Data.from_dict(geo_data)
-        geo_data.file = f
         return geo_data, seq_data, raw_seq_data
 
 
@@ -94,8 +93,7 @@ def collate_chains(data_list,follow_key=None):
     raw_seq_data_list = [
         (f"protein{i}", "".join(d[2]["raw_seq"])) for i, d in enumerate(data_list)
     ]
-    print(len(geo_data_list))
-    print(geo_data_list)
+
     if len(geo_data_list) == 0:
         batch_data = Batch()
     else:
