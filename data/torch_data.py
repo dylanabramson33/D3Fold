@@ -110,7 +110,6 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            print(key)
             if seq_data_list[0][key].shape == ():
                 batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
             elif "mask" in key:

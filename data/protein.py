@@ -38,7 +38,7 @@ class ProteinData():
         self.data[mask] = self.type_.mask_template
 
     def crop_data(self, mask, crop_len):
-      if self.type_.meta_data or len(self.data) < crop_len:
+      if self.type_.meta_data:
         return
 
       if type(self.data) is torch.Tensor:
@@ -186,8 +186,9 @@ class TorchProtein:
         "random": self.random_crop_mask,
         "center": self.center_crop_mask
       }
-
-      if crop_strategy == "random":
+      if len(self.aatype.data) < crop_len:
+        return
+      elif crop_strategy == "random":
         mask = crop_fns[crop_strategy](crop_len)
       elif crop_strategy == "center":
         mask = crop_fns[crop_strategy](crop_len)
