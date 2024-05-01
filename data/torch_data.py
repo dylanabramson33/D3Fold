@@ -110,6 +110,7 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
+            print(key)
             if "mask" in key:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=False
