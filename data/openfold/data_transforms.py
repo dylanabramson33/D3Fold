@@ -16,13 +16,13 @@
 import numpy as np
 import torch
 
-from data import residue_constants as rc
-from data.rigid_utils import Rotation, Rigid
-from data.rigid_matrix_vector import Rigid3Array
-from data.rotation_matrix import Rot3Array
-from data.vector import Vec3Array
+from data.openfold import residue_constants as rc
+from data.openfold.rigid_utils import Rotation, Rigid
+from data.openfold.rigid_matrix_vector import Rigid3Array
+from data.openfold.rotation_matrix import Rot3Array
+from data.openfold.vector import Vec3Array
 
-from data.tensor_utils import (
+from data.openfold.tensor_utils import (
     batched_gather,
 )
 

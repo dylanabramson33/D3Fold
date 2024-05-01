@@ -19,8 +19,8 @@ from typing import List
 
 import torch
 
-from data import vector
-from data.tensor_utils import tensor_tree_map
+from data.openfold import vector
+from data.openfold.tensor_utils import tensor_tree_map
 
 
 COMPONENTS = ['xx', 'xy', 'xz', 'yx', 'yy', 'yz', 'zx', 'zy', 'zz']

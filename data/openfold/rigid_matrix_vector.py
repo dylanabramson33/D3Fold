@@ -19,8 +19,8 @@ from typing import Union, List
 
 import torch
 
-from data import rotation_matrix
-from data import vector
+from data.openfold import rotation_matrix
+from data.openfold import vector
 
 
 Float = Union[float, torch.Tensor]
