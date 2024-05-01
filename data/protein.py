@@ -162,6 +162,7 @@ class TorchProtein:
         if field in ignore_mask_fields:
             continue
         field_data = getattr(self, field)
+        print(foeld_data.type_)
         field_data.mask_data(mask)
 
     def random_crop_mask(self, crop_len=400):
