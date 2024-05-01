@@ -86,36 +86,38 @@ class SingleChainData(Dataset):
         geo_data = Data.from_dict(geo_data)
         return geo_data, seq_data, raw_seq_data
 
+class Collator:
+    def __init__(self, follow_key=None):
+        self.follow_key = follow_key
 
-def collate_chains(data_list,follow_key=None):
-    geo_data_list = [d[0] for d in data_list]
-    seq_data_list = [d[1] for d in data_list]
-    raw_seq_data_list = [
-        (f"protein{i}", "".join(d[2]["raw_seq"])) for i, d in enumerate(data_list)
-    ]
-    print(geo_data_list)
-    print(len(geo_data_list))
-    if len(geo_data_list) == 0:
-        batch_data = Batch()
-    else:
-        batch_data = Batch.from_data_list(geo_data_list, follow_batch=[follow_key])
-
-    batch_data.batch = batch_data.coords_batch
-    batch_data.ptr = batch_data.coords_ptr
-    del batch_data.coords_batch
-    del batch_data.coords_ptr
-
-    for key in seq_data_list[0].keys():
-        if key == "mask":
-            seq = pad_sequence(
-                [d[key] for d in seq_data_list], batch_first=True, padding_value=False
-            )
+    def __call__(self, batch):
+        geo_data_list = [d[0] for d in batch]
+        seq_data_list = [d[1] for d in batch]
+        raw_seq_data_list = [
+            (f"protein{i}", "".join(d[2]["raw_seq"])) for i, d in enumerate(batch)
+        ]
+        # check if any geometric data types
+        if len(geo_data_list[0].keys()) == 0:
+            batch_data = Batch()
         else:
-            seq = pad_sequence(
-                [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
-            )
-        batch_data[key] = seq
-    _, _, batch_tokens = batch_converter(raw_seq_data_list)
-    batch_data.tokens = batch_tokens
+            batch_data = Batch.from_data_list(geo_data_list, follow_batch=[self.follow_key])
 
-    return batch_data
+        batch_data.batch = batch_data.coords_batch
+        batch_data.ptr = batch_data.coords_ptr
+        del batch_data.coords_batch
+        del batch_data.coords_ptr
+
+        for key in seq_data_list[0].keys():
+            if key == "mask":
+                seq = pad_sequence(
+                    [d[key] for d in seq_data_list], batch_first=True, padding_value=False
+                )
+            else:
+                seq = pad_sequence(
+                    [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
+                )
+            batch_data[key] = seq
+        _, _, batch_tokens = batch_converter(raw_seq_data_list)
+        batch_data.tokens = batch_tokens
+
+        return batch_data
