@@ -7,7 +7,7 @@ import torch
 from D3Fold.data.openfold.raw_protein import from_pdb_string
 from D3Fold.data.openfold.raw_protein import make_pdb_features
 from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
-from D3Fold.data.openfold import data_transforms
+from D3Fold.data.openfold import transforms
 
 class ProteinDataType:
     def __init__(self, type=None, pad_type="torch_geometric", mask_template=None, meta_data=False):
@@ -211,12 +211,12 @@ class TorchProtein:
       protein = from_pdb_string(pdb)
       feats = make_pdb_features(protein, "no desc", is_distillation=False)
       tensor_dic = np_to_tensor_dict(feats, feats.keys())
-      tensor_dic = data_transforms.squeeze_features(tensor_dic)
-      tensor_dic = data_transforms.make_atom14_masks(tensor_dic)
-      tensor_dic = data_transforms.make_atom14_positions(tensor_dic)
-      tensor_dic = data_transforms.atom37_to_frames(tensor_dic)
-      tensor_dic = data_transforms.atom37_to_torsion_angles(tensor_dic)
-      tensor_dic = data_transforms.make_pseudo_beta(tensor_dic)
-      tensor_dic = data_transforms.get_backbone_frames(tensor_dic)
-      tensor_dic = data_transforms.get_chi_angles(tensor_dic)
+      tensor_dic = transforms.squeeze_features(tensor_dic)
+      tensor_dic = transforms.make_atom14_masks(tensor_dic)
+      tensor_dic = transforms.make_atom14_positions(tensor_dic)
+      tensor_dic = transforms.atom37_to_frames(tensor_dic)
+      tensor_dic = transforms.atom37_to_torsion_angles(tensor_dic)
+      tensor_dic = transforms.make_pseudo_beta(tensor_dic)
+      tensor_dic = transforms.get_backbone_frames(tensor_dic)
+      tensor_dic = transforms.get_chi_angles(tensor_dic)
       return cls.from_dict(tensor_dic)
