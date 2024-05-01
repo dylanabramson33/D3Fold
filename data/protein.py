@@ -165,6 +165,8 @@ class TorchProtein:
         field_data = getattr(self, field)
         field_data.mask_data(mask)
 
+      return mask
+
     def random_crop_mask(self, crop_len=400):
       start = random.randint(0, len(self.aatype.data) - crop_len)
       end = start + crop_len
