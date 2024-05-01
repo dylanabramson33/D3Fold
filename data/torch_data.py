@@ -11,7 +11,8 @@ from D3Fold.data.protein import TorchProtein
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
 batch_converter = alphabet.get_batch_converter()
-
+FLOAT_TYPES = [torch.float32, torch.float64]
+INT_TYPES = [torch.int32, torch.int64]
 
 class SingleChainData(Dataset):
     def __init__(
@@ -109,15 +110,18 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            if key == "mask":
+            if "mask" in key:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=False
                 )
-            else:
-                print(key)
+            elif seq_data_list[0][key].dtype in FLOAT_TYPES:
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
                 )
+            elif seq_data_list[0][key].dtype in INT_TYPES:
+                seq = pad_sequence(
+                    [d[key] for d in seq_data_list], batch_first=True, padding_value=-1
+            )
             batch_data[key] = seq
         _, _, batch_tokens = batch_converter(raw_seq_data_list)
         batch_data.tokens = batch_tokens
