@@ -22,7 +22,7 @@ class SingleChainData(Dataset):
         limit_by=None,
         use_mask=True,
         use_crop=True,
-        ignore_mask_fields=()
+        ignore_mask_fields=(),
     ):
     
         self.chain_dir = chain_dir
@@ -88,13 +88,18 @@ class SingleChainData(Dataset):
         return geo_data, seq_data, raw_seq_data
 
 
-def collate_chains(data_list):
+def collate_chains(data_list,follow_key=None):
     geo_data_list = [d[0] for d in data_list]
     seq_data_list = [d[1] for d in data_list]
     raw_seq_data_list = [
         (f"protein{i}", "".join(d[2]["raw_seq"])) for i, d in enumerate(data_list)
     ]
-    batch_data = Batch.from_data_list(geo_data_list, follow_batch=["coords"])
+    print(len(geo_data_list))
+    print(geo_data_list)
+    if len(geo_data_list) == 0:
+        batch_data = Batch()
+    else:
+        batch_data = Batch.from_data_list(geo_data_list, follow_batch=[follow_key])
 
     batch_data.batch = batch_data.coords_batch
     batch_data.ptr = batch_data.coords_ptr
