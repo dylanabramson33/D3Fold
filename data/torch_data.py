@@ -114,6 +114,7 @@ class Collator:
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=False
                 )
             else:
+                print(key)
                 seq = pad_sequence(
                     [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
                 )
