@@ -6,7 +6,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
-
+from D3Fold.data.protein import TorchProtein
 
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -45,7 +45,7 @@ class SingleChainData(Dataset):
                 break
             if file.endswith(".ent"):
                 try:
-                    chain = Chain.from_pdb(os.path.join(self.chain_dir, file))
+                    chain = TorchProtein.from_pdb(os.path.join(self.chain_dir, file))
                     with open(
                         os.path.join(self.pickled_dir, file.replace(".ent", ".pkl")),
                         "wb",

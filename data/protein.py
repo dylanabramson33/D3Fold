@@ -4,6 +4,11 @@ import random
 import numpy as np
 import torch
 
+from D3Fold.data.openfold.raw_protein import from_pdb_string
+from D3Fold.data.openfold.raw_protein import make_pdb_features
+from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
+from D3Fold.data.openfold import data_transforms
+
 class ProteinDataType:
     def __init__(self, type=None, pad_type="torch_geometric", mask_template=None, meta_data=False):
         self.type = type
@@ -80,7 +85,6 @@ CHI_ANGLES_SIN_COS = ProteinDataType("CHI_ANGLES_SIN_COS", pad_type="seq", mask_
 CHI_MASK = ProteinDataType("CHI_MASK", pad_type="seq", mask_template=None)
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
-
 
 @dataclass
 class TorchProtein:
@@ -198,3 +202,21 @@ class TorchProtein:
             continue
         field_data = getattr(self, field)
         field_data.crop_data(mask, crop_len)
+
+    @classmethod
+    def from_pdb(cls, pdb_file):
+      with open(pdb_file, 'r') as f:
+        pdb = f.read()
+
+      protein = from_pdb_string(pdb)
+      feats = make_pdb_features(protein, "no desc", is_distillation=False)
+      tensor_dic = np_to_tensor_dict(feats, feats.keys())
+      tensor_dic = data_transforms.squeeze_features(tensor_dic)
+      tensor_dic = data_transforms.make_atom14_masks(tensor_dic)
+      tensor_dic = data_transforms.make_atom14_positions(tensor_dic)
+      tensor_dic = data_transforms.atom37_to_frames(tensor_dic)
+      tensor_dic = data_transforms.atom37_to_torsion_angles(tensor_dic)
+      tensor_dic = data_transforms.make_pseudo_beta(tensor_dic)
+      tensor_dic = data_transforms.get_backbone_frames(tensor_dic)
+      tensor_dic = data_transforms.get_chi_angles(tensor_dic)
+      return cls.from_dict(tensor_dic)

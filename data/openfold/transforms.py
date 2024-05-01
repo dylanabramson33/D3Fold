@@ -21,6 +21,7 @@ from D3Fold.data.openfold.rigid_utils import Rotation, Rigid
 from D3Fold.data.openfold.rigid_matrix_vector import Rigid3Array
 from D3Fold.data.openfold.rotation_matrix import Rot3Array
 from D3Fold.data.openfold.vector import Vec3Array
+from D3Fold.data.protein import ProteinDataType
 
 from data.openfold.tensor_utils import (
     batched_gather,

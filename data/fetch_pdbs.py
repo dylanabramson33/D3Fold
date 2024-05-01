@@ -3,7 +3,7 @@ import json
 import os
 from Bio.PDB import PDBList
 from concurrent.futures import ThreadPoolExecutor
-from data.utils import process_protein_inv
+from D3Fold.data.utils import process_protein_inv
 
 def fetch_pdb_ids(num_chains=1):
     url = 'https://search.rcsb.org/rcsbsearch/v2/query?json='
