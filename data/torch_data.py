@@ -100,12 +100,13 @@ class Collator:
         if len(geo_data_list[0].keys()) == 0:
             batch_data = Batch()
         else:
+            # eventually I'll need to change this to handle heterogenous data
             batch_data = Batch.from_data_list(geo_data_list, follow_batch=[self.follow_key])
 
-        batch_data.batch = batch_data.coords_batch
-        batch_data.ptr = batch_data.coords_ptr
-        del batch_data.coords_batch
-        del batch_data.coords_ptr
+            batch_data.batch = batch_data[f"{self.follow_key}_batch"]
+            batch_data.ptr = batch_data[f"{self.follow_key}_ptr"]
+            del batch_data[f"{self.follow_key}_batch"]
+            del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
             if key == "mask":
