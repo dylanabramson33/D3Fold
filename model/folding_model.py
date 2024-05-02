@@ -1,15 +1,185 @@
 import torch
 from torch import nn
 from mamba_ssm import Mamba
+from typing import Dict, Union
 
 import esm
 from torch_geometric.nn import radius_graph
 import lightning as L
 import numpy as np
+from D3Fold.data.openfold.residue_constants import (
+    restype_rigid_group_default_frame,
+    restype_atom14_to_rigid_group,
+    restype_atom14_mask,
+    restype_atom14_rigid_group_positions,
+)
+from D3Fold.data.openfold import rigid_matrix_vector, rotation_matrix, vector
+from D3Fold.data.openfold import Rotation, Rigid
 
 from model.losses import sequence_loss
 from invariant_point_attention import InvariantPointAttention
 
+def torsion_angles_to_frames(
+    r: Union[Rigid, rigid_matrix_vector.Rigid3Array],
+    alpha: torch.Tensor,
+    aatype: torch.Tensor,
+    rrgdf: torch.Tensor,
+):
+
+    rigid_type = type(r)
+
+    # [*, N, 8, 4, 4]
+    default_4x4 = rrgdf[aatype, ...]
+
+    # [*, N, 8] transformations, i.e.
+    #   One [*, N, 8, 3, 3] rotation matrix and
+    #   One [*, N, 8, 3]    translation matrix
+    default_r = rigid_type.from_tensor_4x4(default_4x4)
+
+    bb_rot = alpha.new_zeros((*((1,) * len(alpha.shape[:-1])), 2))
+    bb_rot[..., 1] = 1
+
+    # [*, N, 8, 2]
+    alpha = torch.cat(
+        [bb_rot.expand(*alpha.shape[:-2], -1, -1), alpha], dim=-2
+    )
+
+    # [*, N, 8, 3, 3]
+    # Produces rotation matrices of the form:
+    # [
+    #   [1, 0  , 0  ],
+    #   [0, a_2,-a_1],
+    #   [0, a_1, a_2]
+    # ]
+    # This follows the original code rather than the supplement, which uses
+    # different indices.
+
+    all_rots = alpha.new_zeros(default_r.shape + (4, 4))
+    all_rots[..., 0, 0] = 1
+    all_rots[..., 1, 1] = alpha[..., 1]
+    all_rots[..., 1, 2] = -alpha[..., 0]
+    all_rots[..., 2, 1:3] = alpha
+
+    all_rots = rigid_type.from_tensor_4x4(all_rots)
+    all_frames = default_r.compose(all_rots)
+
+    chi2_frame_to_frame = all_frames[..., 5]
+    chi3_frame_to_frame = all_frames[..., 6]
+    chi4_frame_to_frame = all_frames[..., 7]
+
+    chi1_frame_to_bb = all_frames[..., 4]
+    chi2_frame_to_bb = chi1_frame_to_bb.compose(chi2_frame_to_frame)
+    chi3_frame_to_bb = chi2_frame_to_bb.compose(chi3_frame_to_frame)
+    chi4_frame_to_bb = chi3_frame_to_bb.compose(chi4_frame_to_frame)
+
+    all_frames_to_bb = rigid_type.cat(
+        [
+            all_frames[..., :5],
+            chi2_frame_to_bb.unsqueeze(-1),
+            chi3_frame_to_bb.unsqueeze(-1),
+            chi4_frame_to_bb.unsqueeze(-1),
+        ],
+        dim=-1,
+    )
+
+    all_frames_to_global = r[..., None].compose(all_frames_to_bb)
+
+    return all_frames_to_global
+
+
+def frames_and_literature_positions_to_atom14_pos(
+    r: Union[Rigid, rigid_matrix_vector.Rigid3Array],
+    aatype: torch.Tensor,
+    default_frames,
+    group_idx,
+    atom_mask,
+    lit_positions,
+):
+    # [*, N, 14, 4, 4]
+    default_4x4 = default_frames[aatype, ...]
+
+    # [*, N, 14]
+    group_mask = group_idx[aatype, ...]
+
+    # [*, N, 14, 8]
+    group_mask = nn.functional.one_hot(
+        group_mask,
+        num_classes=default_frames.shape[-3],
+    )
+
+    # [*, N, 14, 8]
+    t_atoms_to_global = r[..., None, :] * group_mask
+
+    # [*, N, 14]
+    t_atoms_to_global = t_atoms_to_global.map_tensor_fn(
+        lambda x: torch.sum(x, dim=-1)
+    )
+
+    # [*, N, 14]
+    atom_mask = atom_mask[aatype, ...].unsqueeze(-1)
+
+    # [*, N, 14, 3]
+    lit_positions = lit_positions[aatype, ...]
+    pred_positions = t_atoms_to_global.apply(lit_positions)
+    pred_positions = pred_positions * atom_mask
+
+    return pred_positions
+
+
+
+class BackboneUpdate(nn.Module):
+    """
+    Implements part of Algorithm 23.
+    """
+
+    def __init__(self, c_s):
+        """
+        Args:
+            c_s:
+                Single representation channel dimension
+        """
+        super(BackboneUpdate, self).__init__()
+
+        self.c_s = c_s
+
+        self.linear = nn.Linear(self.c_s, 6, init="final")
+
+    def forward(self, s: torch.Tensor):
+        """
+        Args:
+            [*, N_res, C_s] single representation
+        Returns:
+            [*, N_res, 6] update vector
+        """
+        # [*, 6]
+        update = self.linear(s)
+
+        return update
+
+
+class StructureModuleTransitionLayer(nn.Module):
+    def __init__(self, c):
+        super(StructureModuleTransitionLayer, self).__init__()
+
+        self.c = c
+
+        self.linear_1 = nn.Linear(self.c, self.c, init="relu")
+        self.linear_2 = nn.Linear(self.c, self.c, init="relu")
+        self.linear_3 = nn.Linear(self.c, self.c, init="final")
+
+        self.relu = nn.ReLU()
+
+    def forward(self, s):
+        s_initial = s
+        s = self.linear_1(s)
+        s = self.relu(s)
+        s = self.linear_2(s)
+        s = self.relu(s)
+        s = self.linear_3(s)
+
+        s = s + s_initial
+
+        return s
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32):
@@ -134,3 +304,68 @@ class D3Fold(L.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4)
         return optimizer
+
+
+    def _init_residue_constants(self, float_dtype, device):
+        if not hasattr(self, "default_frames"):
+            self.register_buffer(
+                "default_frames",
+                torch.tensor(
+                    restype_rigid_group_default_frame,
+                    dtype=float_dtype,
+                    device=device,
+                    requires_grad=False,
+                ),
+                persistent=False,
+            )
+        if not hasattr(self, "group_idx"):
+            self.register_buffer(
+                "group_idx",
+                torch.tensor(
+                    restype_atom14_to_rigid_group,
+                    device=device,
+                    requires_grad=False,
+                ),
+                persistent=False,
+            )
+        if not hasattr(self, "atom_mask"):
+            self.register_buffer(
+                "atom_mask",
+                torch.tensor(
+                    restype_atom14_mask,
+                    dtype=float_dtype,
+                    device=device,
+                    requires_grad=False,
+                ),
+                persistent=False,
+            )
+        if not hasattr(self, "lit_positions"):
+            self.register_buffer(
+                "lit_positions",
+                torch.tensor(
+                    restype_atom14_rigid_group_positions,
+                    dtype=float_dtype,
+                    device=device,
+                    requires_grad=False,
+                ),
+                persistent=False,
+            )
+    def torsion_angles_to_frames(self, r, alpha, f):
+        # Lazily initialize the residue constants on the correct device
+        self._init_residue_constants(alpha.dtype, alpha.device)
+        # Separated purely to make testing less annoying
+        return torsion_angles_to_frames(r, alpha, f, self.default_frames)
+
+    def frames_and_literature_positions_to_atom14_pos(
+            self, r, f  # [*, N, 8]  # [*, N]
+    ):
+        # Lazily initialize the residue constants on the correct device
+        self._init_residue_constants(r.dtype, r.device)
+        return frames_and_literature_positions_to_atom14_pos(
+            r,
+            f,
+            self.default_frames,
+            self.group_idx,
+            self.atom_mask,
+            self.lit_positions,
+        )
