@@ -22,7 +22,7 @@ from D3Fold.data.openfold.rigid_matrix_vector import Rigid3Array
 from D3Fold.data.openfold.rotation_matrix import Rot3Array
 from D3Fold.data.openfold.vector import Vec3Array
 
-from data.openfold.tensor_utils import (
+from D3Fold.data.openfold.tensor_utils import (
     batched_gather,
 )
 
