@@ -1123,7 +1123,7 @@ class Rigid:
     @staticmethod
     def from_tensor_4x4(
         t: torch.Tensor
-    ) -> Rigid:
+    ):
         """
             Constructs a transformation from a homogenous transformation
             tensor.
