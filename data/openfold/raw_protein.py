@@ -351,7 +351,6 @@ def to_pdb(prot: RawProtein) -> str:
             print(alt_loc)
             # PDB is a columnar format, every space matters here!
             atom_line = (
-                
                 f"{record_type:<6}{atom_index:>5} {name:<4}{alt_loc:>1}"
                 #TODO: check this refactor, chose main branch version
                 #f"{res_name_3:>3} {chain_ids[chain_index[i]]:>1}"
