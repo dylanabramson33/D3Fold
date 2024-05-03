@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import esm
 import torch
@@ -6,11 +7,6 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
 from D3Fold.data.protein import TorchProtein
-
-import cPickle as pickle
-import gc
-
-
 
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -65,14 +61,9 @@ class SingleChainData(Dataset):
 
     def __getitem__(self, idx):
         f = self.files[idx]
-        f = open(f, "rb")
-
-        # disable garbage collector
-        gc.disable()
-        chain = pickle.load(f)
-        # enable garbage collector again
-        gc.enable()
-        f.close()
+        with open(os.path.join(self.pickled_dir, f), "rb") as f:
+            # trunk-ignore(bandit/B301)
+            chain = pickle.load(f)
 
         data_fields = list(chain.__dataclass_fields__.keys())
         if self.use_crop:
