@@ -752,7 +752,8 @@ def get_distance_matrix(protein, r=10, pad_size=400):
     ca_pos = ca_pos * nan_mask
     ca_pos = ca_pos.view(-1, 3)
     contact_edges = radius_graph(ca_pos, r=r)
-    contact_mat = torch.zeros((pad_size, pad_size))
+    num_residues = min(ca_pos.shape[0], pad_size)
+    contact_mat = torch.zeros((num_residues, num_residues))
     src_indices, tgt_indices = contact_edges[0], contact_edges[1]
     contact_mat[src_indices, tgt_indices] = 1
     contact_mat[tgt_indices, src_indices] = 1
