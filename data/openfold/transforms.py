@@ -758,14 +758,15 @@ def get_distance_matrix(protein, r=10):
     src_indices, tgt_indices = contact_edges[0], contact_edges[1]
     contact_mat[src_indices, tgt_indices] = 1
     contact_mat[tgt_indices, src_indices] = 1
-
     return contact_mat
 
-def get_distance_mat_stack(data, min_radius=5, max_radius=26, num_radii=8):
+def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=8):
     radius_list = np.linspace(min_radius, max_radius, num_radii)
     stack = []
     for r in radius_list:
-        mat = get_distance_matrix(data, r=r)
+        mat = get_distance_matrix(protein, r=r)
         stack.append(mat)
 
-    return torch.stack(stack, dim=-1)
+    stack = torch.stack(stack, dim=-1)
+    protein["distance_mat_stack"] = stack
+    return protein
