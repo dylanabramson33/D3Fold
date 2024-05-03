@@ -6,6 +6,7 @@ from torch import nn
 from torch_geometric.nn import radius_graph
 from D3Fold.data.openfold import Rigid
 from D3Fold.data.openfold import rigid_matrix_vector
+from D3Fold.data.openfold import residue_constants
 
 def torsion_angles_to_frames(
     r: Union[Rigid, rigid_matrix_vector.Rigid3Array],
@@ -108,38 +109,4 @@ def frames_and_literature_positions_to_atom14_pos(
     lit_positions = lit_positions[aatype, ...]
     pred_positions = t_atoms_to_global.apply(lit_positions)
     pred_positions = pred_positions * atom_mask
-
-def get_distance_matrix(data, r=10):
-      num_graphs = data.seq.shape[0]
-      contact_edges = radius_graph(data.coords, r=r,  batch=data.batch)
-      graph_sizes = data.batch.bincount()
-      largest_graph = torch.max(graph_sizes)
-      num_nodes = data.coords.shape[0]
-      contact_mat = torch.zeros((num_nodes, num_nodes))
-      src_indices, tgt_indices = contact_edges[0], contact_edges[1]
-      contact_mat[src_indices, tgt_indices] = 1
-      contact_mat[tgt_indices, src_indices] = 1
-      sequence_of_contacts = torch.zeros((num_graphs, largest_graph, largest_graph))
-      current_graph_index = 0
-      for i in range(num_graphs):
-          contacts = contact_mat[current_graph_index:current_graph_index+graph_sizes[i], current_graph_index:current_graph_index+graph_sizes[i]]
-          contacts += torch.diag(torch.ones(contacts.shape[0]))
-
-          # if shape is less than max pad with zeros
-          if contacts.shape[0] < largest_graph:
-              contacts = torch.nn.functional.pad(contacts, (0, largest_graph - contacts.shape[0], 0, largest_graph - contacts.shape[1]))
-
-          sequence_of_contacts[i] = contacts
-          current_graph_index += graph_sizes[i]
-
-      return sequence_of_contacts
-
-def get_distance_mat_stack(data, min_radius=5, max_radius=20, num_radii=4):
-    radius_list = np.linspace(min_radius, max_radius, num_radii)
-    stack = []
-    for r in radius_list:
-        mat = get_distance_matrix(data, r=r)
-        stack.append(mat)
-
-    return torch.stack(stack, dim=-1)
 

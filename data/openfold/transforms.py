@@ -16,7 +16,7 @@
 import numpy as np
 import torch
 from contextlib import contextmanager
-
+from torch_geometric.nn import radius_graph
 
 from D3Fold.data.openfold import residue_constants as rc
 from D3Fold.data.openfold.rigid_utils import Rotation, Rigid
@@ -741,3 +741,31 @@ def get_chi_angles(protein):
     protein["chi_mask"] = protein["torsion_angles_mask"][..., 3:].to(dtype)
 
     return protein
+
+def get_distance_matrix(protein, r=10):
+    CA_INDEX = rc.atom_types.index("CA")
+    ca_pos = protein["all_atom_positions"][:, :, CA_INDEX]
+    ca_mask = protein["all_atom_mask"][:, :, CA_INDEX]
+
+    nan_mask = torch.where(ca_mask == 0, torch.nan, torch.ones_like(ca_mask))
+    nan_mask = nan_mask.unsqueeze(-1)
+    ca_pos = ca_pos * nan_mask
+    ca_pos = ca_pos.view(-1, 3)
+    contact_edges = radius_graph(ca_pos, r=r)
+
+    num_residues = ca_pos.shape[0]
+    contact_mat = torch.zeros((num_residues, num_residues))
+    src_indices, tgt_indices = contact_edges[0], contact_edges[1]
+    contact_mat[src_indices, tgt_indices] = 1
+    contact_mat[tgt_indices, src_indices] = 1
+
+    return contact_mat
+
+def get_distance_mat_stack(data, min_radius=5, max_radius=26, num_radii=8):
+    radius_list = np.linspace(min_radius, max_radius, num_radii)
+    stack = []
+    for r in radius_list:
+        mat = get_distance_matrix(data, r=r)
+        stack.append(mat)
+
+    return torch.stack(stack, dim=-1)

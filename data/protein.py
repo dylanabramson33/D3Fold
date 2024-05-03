@@ -7,7 +7,7 @@ import torch
 from D3Fold.data.openfold.raw_protein import make_pdb_features
 from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
 from D3Fold.data.openfold import transforms
-
+from D3Fold.data.openfold.raw_protein import RawProtein
 
 class ProteinDataType:
     def __init__(self, type=None, pad_type="torch_geometric", mask_template=None, meta_data=False):
@@ -208,7 +208,7 @@ class TorchProtein:
     @classmethod
     def from_pdb(cls, pdb_file):
 
-      protein = from_pdb_path(pdb_file)
+      protein = RawProtein.from_pdb_path(pdb_file)
       feats = make_pdb_features(protein, "no desc", is_distillation=False)
       tensor_dic = np_to_tensor_dict(feats, feats.keys())
       tensor_dic = transforms.squeeze_features(tensor_dic)
@@ -219,4 +219,6 @@ class TorchProtein:
       tensor_dic = transforms.make_pseudo_beta(tensor_dic)
       tensor_dic = transforms.get_backbone_frames(tensor_dic)
       tensor_dic = transforms.get_chi_angles(tensor_dic)
+      tensor_dic = transforms.get_rigid_groups(tensor_dic)
+      tensor_dic = transforms.get_distance_mat_stack(tensor_dic)
       return cls.from_dict(tensor_dic)
