@@ -747,11 +747,11 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64, p
     ca_pos = protein["all_atom_positions"][:, CA_INDEX]
 
     dists = cdist(ca_pos, ca_pos)
-    bins = torch.linspace(min_radius, max_radius, 64)
+    bins = torch.linspace(min_radius, max_radius, num_radii)
     buckets = torch.bucketize(dists, bins)
-    distograms = torch.zeros(dists.shape[0], dists.shape[0], num_radii)
-    pad_size = max(ca_pos.shape[0], pad_size)
-    padded = torch.zeros(pad_size, pad_size, num_radii)
+    distograms = torch.zeros(dists.shape[0], dists.shape[0], num_radii + 1)
+    pad_size = max(dists.shape[0], pad_size)
+    padded = torch.zeros(pad_size, pad_size, num_radii  + 1)
     scattered = distograms.clone().scatter_(2, buckets.unsqueeze(-1), True)
     padded[:dists.shape[0], :dists.shape[0], :] = scattered
     protein["distance_mat_stack"] = padded
