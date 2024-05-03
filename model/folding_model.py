@@ -4,66 +4,11 @@ from mamba_ssm import Mamba
 
 import esm
 import lightning as L
-import numpy as np
-
 
 from model.losses import sequence_loss
 from invariant_point_attention import InvariantPointAttention
 from D3Fold.model import utils as model_utils
 
-class BackboneUpdate(nn.Module):
-    """
-    Implements part of Algorithm 23.
-    """
-
-    def __init__(self, c_s):
-        """
-        Args:
-            c_s:
-                Single representation channel dimension
-        """
-        super(BackboneUpdate, self).__init__()
-
-        self.c_s = c_s
-
-        self.linear = nn.Linear(self.c_s, 6, init="final")
-
-    def forward(self, s: torch.Tensor):
-        """
-        Args:
-            [*, N_res, C_s] single representation
-        Returns:
-            [*, N_res, 6] update vector
-        """
-        # [*, 6]
-        update = self.linear(s)
-
-        return update
-
-
-class StructureModuleTransitionLayer(nn.Module):
-    def __init__(self, c):
-        super(StructureModuleTransitionLayer, self).__init__()
-
-        self.c = c
-
-        self.linear_1 = nn.Linear(self.c, self.c, init="relu")
-        self.linear_2 = nn.Linear(self.c, self.c, init="relu")
-        self.linear_3 = nn.Linear(self.c, self.c, init="final")
-
-        self.relu = nn.ReLU()
-
-    def forward(self, s):
-        s_initial = s
-        s = self.linear_1(s)
-        s = self.relu(s)
-        s = self.linear_2(s)
-        s = self.relu(s)
-        s = self.linear_3(s)
-
-        s = s + s_initial
-
-        return s
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32, freeze_esm=False):
@@ -137,7 +82,7 @@ class D3Fold(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
-        distance_mats = model_utils.get_distance_mat_stack(batch)
+        distance_mats = batch["distance_mat_stack"]
         loss = 0
         for loss_fn in self.losses:
             # this is shit but on right track
@@ -151,7 +96,6 @@ class D3Fold(L.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4)
         return optimizer
-
 
     def torsion_angles_to_frames(self, r, alpha, f):
         # Lazily initialize the residue constants on the correct device
