@@ -160,20 +160,6 @@ class RawProtein:
 
         parents = None
         parents_chain_index = None
-        if("PARENT" in pdb_str):
-            parents = []
-            parents_chain_index = []
-            chain_id = 0
-            for l in pdb_str.split("\n"):
-                if("PARENT" in l):
-                    if(not "N/A" in l):
-                        parent_names = l.split()[1:]
-                        parents.extend(parent_names)
-                        parents_chain_index.extend([
-                            chain_id for _ in parent_names
-                        ])
-                    chain_id += 1
-
         chain_id_mapping = {cid: n for n, cid in enumerate(string.ascii_uppercase)}
         chain_index = np.array([chain_id_mapping[cid] for cid in chain_ids])
 
