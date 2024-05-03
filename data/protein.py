@@ -219,6 +219,5 @@ class TorchProtein:
       tensor_dic = transforms.make_pseudo_beta(tensor_dic)
       tensor_dic = transforms.get_backbone_frames(tensor_dic)
       tensor_dic = transforms.get_chi_angles(tensor_dic)
-      tensor_dic = transforms.get_rigid_groups(tensor_dic)
       tensor_dic = transforms.get_distance_mat_stack(tensor_dic)
       return cls.from_dict(tensor_dic)
