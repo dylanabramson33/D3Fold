@@ -4,7 +4,6 @@ import random
 import numpy as np
 import torch
 
-from D3Fold.data.openfold.raw_protein import from_pdb_path
 from D3Fold.data.openfold.raw_protein import make_pdb_features
 from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
 from D3Fold.data.openfold import transforms
