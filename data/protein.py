@@ -95,7 +95,7 @@ CHI_ANGLES_SIN_COS = ProteinDataType("CHI_ANGLES_SIN_COS", pad_type="seq", mask_
 CHI_MASK = ProteinDataType("CHI_MASK", pad_type="seq", mask_template=None)
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
-DIST_MAT = ProteinDataType("DIST_MAT", pad_type="seq", mask_template=None)
+DIST_MAT = ProteinDataType("DIST_MAT", pad_type="seq", mask_template=None, pair_type=True)
 
 @dataclass
 class TorchProtein:
