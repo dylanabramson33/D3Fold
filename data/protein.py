@@ -85,6 +85,7 @@ CHI_ANGLES_SIN_COS = ProteinDataType("CHI_ANGLES_SIN_COS", pad_type="seq", mask_
 CHI_MASK = ProteinDataType("CHI_MASK", pad_type="seq", mask_template=None)
 raw_mask = np.array(["<mask>"])
 RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
+DIST_MAT = ProteinDataType("DIST_MAT", pad_type="seq", mask_template=raw_mask)
 
 @dataclass
 class TorchProtein:
@@ -117,6 +118,7 @@ class TorchProtein:
     chi_angles_sin_cos: ProteinData
     chi_mask: ProteinData
     raw_seq: ProteinData
+    distance_mat_stack: ProteinData
 
 
     @classmethod
@@ -150,7 +152,8 @@ class TorchProtein:
         backbone_rigid_mask=ProteinData(data_dict["backbone_rigid_mask"], BACKBONE_RIGID_MASK),
         chi_angles_sin_cos=ProteinData(data_dict["chi_angles_sin_cos"], CHI_ANGLES_SIN_COS),
         chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
-        raw_seq=ProteinData(data_dict["sequence"], RAW_SEQ)
+        raw_seq=ProteinData(data_dict["sequence"], RAW_SEQ),
+        distance_mat_stack=ProteinData(data_dict["distance_mat_stack"], DIST_MAT)
       )
 
     def mask_fields(self, ignore_mask_fields=(), mask_percent=0.15):
