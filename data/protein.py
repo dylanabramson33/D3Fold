@@ -53,9 +53,10 @@ class ProteinData():
       if type(self.data) is np.ndarray:
         mask = mask.numpy()
 
-      self.data = self.data[mask]
       if self.type_.pair_type:
          self.data = self.data[mask, mask]
+      else:
+        self.data = self.data[mask]
 
     def __repr__(self):
         return str(self.data)
