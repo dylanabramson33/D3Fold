@@ -54,7 +54,8 @@ class ProteinData():
         mask = mask.numpy()
 
       if self.type_.pair_type:
-         self.data = self.data[mask, mask]
+         self.data = self.data[mask]
+         self.data = self.data[:, mask]
       else:
         self.data = self.data[mask]
 
