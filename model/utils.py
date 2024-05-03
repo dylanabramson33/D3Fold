@@ -1,12 +1,9 @@
 import torch 
-import numpy as np
-from typing import Dict, Union
+from typing import Union
 
 from torch import nn
-from torch_geometric.nn import radius_graph
-from D3Fold.data.openfold import Rigid
+from D3Fold.data.openfold.rigid_utils import Rigid
 from D3Fold.data.openfold import rigid_matrix_vector
-from D3Fold.data.openfold import residue_constants
 
 def torsion_angles_to_frames(
     r: Union[Rigid, rigid_matrix_vector.Rigid3Array],
