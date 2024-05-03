@@ -10,11 +10,20 @@ from D3Fold.data.openfold import transforms
 from D3Fold.data.openfold.raw_protein import RawProtein
 
 class ProteinDataType:
-    def __init__(self, type=None, pad_type="torch_geometric", mask_template=None, meta_data=False):
+    def __init__(
+          self,
+          type=None,
+          pad_type="torch_geometric",
+          mask_template=None,
+          meta_data=False,
+          pair_type=False,
+          ):
         self.type = type
         self.mask_template = mask_template
         self.pad_type = pad_type
         self.meta_data = meta_data
+        self.pair_type = pair_type
+
 
     def __repr__(self):
         return self.type
@@ -41,11 +50,12 @@ class ProteinData():
       if self.type_.meta_data:
         return
 
-      if type(self.data) is torch.Tensor:
-        self.data = self.data[mask]
       if type(self.data) is np.ndarray:
-        np_mask = mask.numpy()
-        self.data = self.data[np_mask]
+        mask = mask.numpy()
+
+      self.data = self.data[mask]
+      if self.type_.pair_type:
+         self.data = self.data[mask, mask]
 
     def __repr__(self):
         return str(self.data)

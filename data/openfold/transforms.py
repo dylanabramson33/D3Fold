@@ -766,6 +766,6 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=8):
         mat = get_distance_matrix(protein, r=r)
         stack.append(mat)
 
-    stack = torch.stack(stack, dim=0)
+    stack = torch.stack(stack, dim=-1)
     protein["distance_mat_stack"] = stack
     return protein
