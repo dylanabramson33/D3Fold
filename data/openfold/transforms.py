@@ -744,15 +744,14 @@ def get_chi_angles(protein):
 
 def get_distance_matrix(protein, r=10):
     CA_INDEX = rc.atom_types.index("CA")
-    ca_pos = protein["all_atom_positions"][:, :, CA_INDEX]
-    ca_mask = protein["all_atom_mask"][:, :, CA_INDEX]
+    ca_pos = protein["all_atom_positions"][:, CA_INDEX]
+    ca_mask = protein["all_atom_mask"][:, CA_INDEX]
 
     nan_mask = torch.where(ca_mask == 0, torch.nan, torch.ones_like(ca_mask))
     nan_mask = nan_mask.unsqueeze(-1)
     ca_pos = ca_pos * nan_mask
     ca_pos = ca_pos.view(-1, 3)
     contact_edges = radius_graph(ca_pos, r=r)
-
     num_residues = ca_pos.shape[0]
     contact_mat = torch.zeros((num_residues, num_residues))
     src_indices, tgt_indices = contact_edges[0], contact_edges[1]
@@ -767,6 +766,6 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=8):
         mat = get_distance_matrix(protein, r=r)
         stack.append(mat)
 
-    stack = torch.stack(stack, dim=-1)
+    stack = torch.stack(stack, dim=0)
     protein["distance_mat_stack"] = stack
     return protein
