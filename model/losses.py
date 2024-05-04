@@ -1,4 +1,8 @@
+import torch
 import torch.nn as nn
+
+from D3Fold.data.openfold import residue_constants as rc
+
 
 class LossFn:
     def __init__(self, loss_fn, representation_target="pair"):
@@ -19,18 +23,13 @@ class SequenceLoss(LossFn):
     def __call__(self, y_pred, y_true, **kwargs):
         return self.loss_fn(y_pred, y_true, **kwargs)
 
-def masked_sequence_loss(y_pred, y_true, mask=None):
+def masked_pairwise_loss(y_pred, data, mask=None):
     loss_fn = nn.CrossEntropyLoss()
-    y_true[~mask] = -100
-    y_true = y_true.long()
-    y_pred = y_pred.permute(0, 2, 1)
-
-    return loss_fn(y_pred, y_true)
-
-def masked_pairwise_loss(y_pred, y_true, mask=None):
-    loss_fn = nn.BCEWithLogitsLoss()
-    y_true[~mask] = 0
-    y_pred[~mask] = 0
-    return loss_fn(y_pred, y_true)
-
-sequence_loss = SequenceLoss(masked_sequence_loss)
+    distance_mat = data["distance_mat_stack"]
+    gathered = distance_mat.argmax(dim=-1).long()
+    CA_INDEX = rc.atom_types.index("CA")
+    mask = data["atom37_atom_exists"][:, :, CA_INDEX]
+    mask = torch.where(~mask.isnan(),mask,torch.zeros_like(mask)).bool()
+    gathered[~mask.unsqueeze(-1).expand_as(gathered)] = -100
+    y_pred = y_pred.permute(0,3,1,2)
+    return loss_fn(y_pred, gathered)
