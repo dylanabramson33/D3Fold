@@ -33,3 +33,5 @@ def masked_pairwise_loss(y_pred, data, mask=None):
     gathered[~mask.unsqueeze(-1).expand_as(gathered)] = -100
     y_pred = y_pred.permute(0,3,1,2)
     return loss_fn(y_pred, gathered)
+
+sequence_loss = SequenceLoss(masked_pairwise_loss)
