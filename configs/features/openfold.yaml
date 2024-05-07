@@ -35,7 +35,7 @@ features:
     pad_type: 'seq'
   - name: 'rigidgroups_group_exists'
     pad_type: 'seq'
-  - name: 'rigidgroups_group_is_ambiguous'
+  - name: 'rigidgroups_gt_group_is_ambiguous'
     pad_type: 'seq'
   - name: 'rigidgroups_alt_gt_frames'
     pad_type: 'seq'
