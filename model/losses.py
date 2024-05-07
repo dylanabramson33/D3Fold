@@ -23,7 +23,7 @@ class SequenceLoss(LossFn):
     def __call__(self, y_pred, y_true, **kwargs):
         return self.loss_fn(y_pred, y_true, **kwargs)
 
-def masked_pairwise_loss(y_pred, data, mask=None):
+def pairwise_dist_loss(y_pred, data):
     loss_fn = nn.CrossEntropyLoss()
     distance_mat = data["distance_mat_stack"]
     gathered = distance_mat.argmax(dim=-1).long()
@@ -34,4 +34,4 @@ def masked_pairwise_loss(y_pred, data, mask=None):
     y_pred = y_pred.permute(0,3,1,2)
     return loss_fn(y_pred, gathered)
 
-sequence_loss = SequenceLoss(masked_pairwise_loss)
+pairwise_loss = PairwiseLoss(pairwise_dist_loss)

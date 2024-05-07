@@ -5,7 +5,7 @@ from mamba_ssm import Mamba
 import esm
 import lightning as L
 
-from model.losses import sequence_loss
+from model.losses import pairwise_loss
 from invariant_point_attention import InvariantPointAttention
 from D3Fold.model import utils as model_utils
 
@@ -60,7 +60,7 @@ class IPA(nn.Module):
 class D3Fold(L.LightningModule):
     def __init__(self, mamba_layers=3, freeze_esm=False):
         super().__init__()
-        self.losses = [sequence_loss]
+        self.losses = [pairwise_loss]
 
         esm_dim = 1280
         self.folding_trunk = FoldingTrunk(
@@ -68,6 +68,7 @@ class D3Fold(L.LightningModule):
             s_dim_out=32,
             z_dim_in=1,
             z_dim_out=32,
+            freeze_esm=freeze_esm
         )
 
         self.final_z_proj = nn.Linear(32, 1)
@@ -82,14 +83,13 @@ class D3Fold(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         s, z = self.forward(batch)
-        distance_mats = batch["distance_mat_stack"]
         loss = 0
         for loss_fn in self.losses:
             # this is shit but on right track
             if loss_fn.representation_target == "seq":
-                loss += loss_fn(s, batch.seq, mask=batch.mask)
+                loss += loss_fn(s, batch)
             if loss_fn.representation_target == "pair":
-                loss += loss_fn(z, distance_mats)
+                loss += loss_fn(z, batch)
         self.log("train_loss", loss)
         return loss
 
