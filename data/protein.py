@@ -177,7 +177,9 @@ class TorchProtein:
         raise ValueError("Invalid crop strategy")
 
       for field in self.__dataclass_fields__.keys():
-        if field in ignore_mask_fields:
+        if isinstance(getattr(self, field), type(None)):
+          print(f"Field {field} is None")
+        if field in ignore_mask_fields or isinstance(getattr(self, field), type(None)):
             continue
         field_data = getattr(self, field)
         field_data.crop_data(mask, crop_len)
