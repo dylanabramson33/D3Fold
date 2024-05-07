@@ -5,10 +5,9 @@ from mamba_ssm import Mamba
 import esm
 import lightning as L
 
-from model.losses import pairwise_loss
+from D3Fold.model.losses import pairwise_loss
 from invariant_point_attention import InvariantPointAttention
 from D3Fold.model import utils as model_utils
-
 
 class FoldingTrunk(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32, freeze_esm=False):
@@ -78,7 +77,6 @@ class D3Fold(L.LightningModule):
         s, z = self.folding_trunk(batch)
         z = self.final_z_proj(z).squeeze(-1)
         s = self.final_s_proj(s)
-        s = s.softmax(dim=-1)
         return s, z
 
     def training_step(self, batch, batch_idx):

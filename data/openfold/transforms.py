@@ -741,7 +741,7 @@ def get_chi_angles(protein):
 
     return protein
 
-def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64, pad_size=400):
+def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     # this ignores glycine for now
     CA_INDEX = rc.atom_types.index("CA")
     ca_pos = protein["all_atom_positions"][:, CA_INDEX]
@@ -750,9 +750,12 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64, p
     bins = torch.linspace(min_radius, max_radius, num_radii)
     buckets = torch.bucketize(dists, bins)
     distograms = torch.zeros(dists.shape[0], dists.shape[0], num_radii + 1)
-    pad_size = max(dists.shape[0], pad_size)
-    padded = torch.zeros(pad_size, pad_size, num_radii  + 1)
-    scattered = distograms.clone().scatter_(2, buckets.unsqueeze(-1), True)
-    padded[:dists.shape[0], :dists.shape[0], :] = scattered
-    protein["distance_mat_stack"] = padded
+    return protein
+
+def pad_features(protein, pad_size=400):
+    for k, v in protein.items():
+        if torch.is_tensor(v) and len(v.shape) > 1:
+            padded = torch.zeros(pad_size, *v.shape[1:], device=v.device)
+            padded[:v.shape[0]] = v
+            protein[k] = padded
     return protein

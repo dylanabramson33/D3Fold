@@ -1,3 +1,6 @@
+import inspect
+import sys
+
 from dataclasses import dataclass
 
 import random
@@ -65,39 +68,47 @@ class ProteinData():
     def __str__(self):
         return str(self.data)
 
-AA_TYPE = ProteinDataType("AA_TYPE", pad_type="seq", mask_template=None)
-RES_INDEX = ProteinDataType("RES_INDEX", pad_type="seq", mask_template=None)
-SEQ_LENGTH = ProteinDataType("SEQ_LENGTH", pad_type="seq", mask_template=None, meta_data=True)
-AA_POSITIONS = ProteinDataType("AA_POSITIONS", pad_type="seq", mask_template=None)
-ALL_ATOM_MASK = ProteinDataType("ALL_ATOM_MASK", pad_type="seq", mask_template=None)
-RESOLUTION = ProteinDataType("RESOLUTION", pad_type="seq", mask_template=None, meta_data=True)
-IS_DISTILLATION = ProteinDataType("IS_DISTILLATION", pad_type="seq", mask_template=None, meta_data=True)
-ATOM14_EXISTS = ProteinDataType("ATOM_14_EXISTS", pad_type="seq", mask_template=None)
-RESIDX_ATOM14_TO_ATOM37 = ProteinDataType("RESIDX_ATOM14_TO_ATOM37", pad_type="seq", mask_template=None)
-RESIDX_ATOM37_TO_ATOM14 = ProteinDataType("RESIDX_ATOM37_TO_ATOM14", pad_type="seq", mask_template=None)
-ATOM37_ATOM_EXISTS = ProteinDataType("ATOM37_ATOM_EXISTS", pad_type="seq", mask_template=None)
-ATOM14_GT_EXISTS = ProteinDataType("ATOM14_GT_EXISTS", pad_type="seq", mask_template=None)
-ATOM14_GT_POSITIONS = ProteinDataType("ATOM14_GT_POSITIONS", pad_type="seq", mask_template=None)
-ATOM14_ALT_GT_POSITIONS = ProteinDataType("ATOM14_ALT_GT_POSITIONS", pad_type="seq", mask_template=None)
-ATOM14_ALT_GT_EXISTS = ProteinDataType("ATOM14_ALT_GT_EXISTS", pad_type="seq", mask_template=None)
-ATOM14_ATOM_IS_AMBIGUOUS = ProteinDataType("ATOM14_ATOM_IS_AMBIGUOUS", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GT_FRAMES = ProteinDataType("RIGIDGROUPS_GT_FRAMES", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GT_EXISTS = ProteinDataType("RIGIDGROUPS_GT_EXISTS", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GROUP_EXISTS = ProteinDataType("RIGIDGROUPS_GROUP_EXISTS", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GROUP_IS_AMBIGUOUS = ProteinDataType("RIGIDGROUPS_GROUP_IS_AMBIGUOUS", pad_type="seq", mask_template=None)
-RIGIDGROUPS_ALT_GT_FRAMES = ProteinDataType("RIGIDGROUPS_ALT_GT_FRAMES", pad_type="seq", mask_template=None)
-TORSION_ANGLES_SIN_COS = ProteinDataType("TORSION_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
-ALT_TORSION_ANGLES_SIN_COS = ProteinDataType("ALT_TORSION_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
-TORSION_ANGLES_MASK = ProteinDataType("TORSION_ANGLES_MASK", pad_type="seq", mask_template=None)
-PSEUDO_BETA = ProteinDataType("PSEUDO_BETA", pad_type="seq", mask_template=None)
-PSEUDO_BETA_MASK = ProteinDataType("PSEUDO_BETA_MASK", pad_type="seq", mask_template=None)
-BACKBONE_RIGID_TENSOR = ProteinDataType("BACKBONE_RIGID_TENSOR", pad_type="seq", mask_template=None)
-BACKBONE_RIGID_MASK = ProteinDataType("BACKBONE_RIGID_MASK", pad_type="seq", mask_template=None)
-CHI_ANGLES_SIN_COS = ProteinDataType("CHI_ANGLES_SIN_COS", pad_type="seq", mask_template=None)
-CHI_MASK = ProteinDataType("CHI_MASK", pad_type="seq", mask_template=None)
+AA_TYPE = ProteinDataType("aatype", pad_type="seq", mask_template=None)
+RES_INDEX = ProteinDataType("residue_index", pad_type="seq", mask_template=None)
+AA_POSITIONS = ProteinDataType("all_atom_positions", pad_type="seq", mask_template=None)
+ALL_ATOM_MASK = ProteinDataType("all_atom_mask", pad_type="seq", mask_template=None)
+RESOLUTION = ProteinDataType("resolution", pad_type="seq", mask_template=None, meta_data=True)
+IS_DISTILLATION = ProteinDataType("is_distillation", pad_type="seq", mask_template=None, meta_data=True)
+ATOM14_EXISTS = ProteinDataType("atom14_atom_exists", pad_type="seq", mask_template=None)
+RESIDX_ATOM14_TO_ATOM37 = ProteinDataType("residx_atom14_to_atom37", pad_type="seq", mask_template=None)
+RESIDX_ATOM37_TO_ATOM14 = ProteinDataType("residx_atom37_to_atom14", pad_type="seq", mask_template=None)
+ATOM37_ATOM_EXISTS = ProteinDataType("atom37_atom_exists", pad_type="seq", mask_template=None)
+ATOM14_GT_EXISTS = ProteinDataType("atom14_gt_exists", pad_type="seq", mask_template=None)
+ATOM14_GT_POSITIONS = ProteinDataType("atom14_gt_positions", pad_type="seq", mask_template=None)
+ATOM14_ALT_GT_POSITIONS = ProteinDataType("atom14_alt_gt_positions", pad_type="seq", mask_template=None)
+ATOM14_ALT_GT_EXISTS = ProteinDataType("atom14_alt_gt_exists", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GT_FRAMES = ProteinDataType("rigidgroups_gt_frames", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GT_EXISTS = ProteinDataType("rigidgroups_gt_exists", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GROUP_EXISTS = ProteinDataType("rigidgroups_group_exists", pad_type="seq", mask_template=None)
+RIGIDGROUPS_GROUP_IS_AMBIGUOUS = ProteinDataType("rigidgroups_group_is_ambiguous", pad_type="seq", mask_template=None)
+RIGIDGROUPS_ALT_GT_FRAMES = ProteinDataType("rigidgroups_alt_gt_frames", pad_type="seq", mask_template=None)
+TORSION_ANGLES_SIN_COS = ProteinDataType("torsion_angles_sin_cos", pad_type="seq", mask_template=None)
+ALT_TORSION_ANGLES_SIN_COS = ProteinDataType("alt_torsion_angles_sin_cos", pad_type="seq", mask_template=None)
+TORSION_ANGLES_MASK = ProteinDataType("torsion_angles_mask", pad_type="seq", mask_template=None)
+PSEUDO_BETA = ProteinDataType("pseudo_beta", pad_type="seq", mask_template=None)
+PSEUDO_BETA_MASK = ProteinDataType("pseudo_beta_mask", pad_type="seq", mask_template=None)
+BACKBONE_RIGID_TENSOR = ProteinDataType("backbone_rigid_tensor", pad_type="seq", mask_template=None)
+BACKBONE_RIGID_MASK = ProteinDataType("backbone_rigid_mask", pad_type="seq", mask_template=None)
+CHI_ANGLES_SIN_COS = ProteinDataType("chi_angles_sin_cos", pad_type="seq", mask_template=None)
+CHI_MASK = ProteinDataType("chi_mask", pad_type="seq", mask_template=None)
 raw_mask = np.array(["<mask>"])
-RAW_SEQ = ProteinDataType("RAW_SEQ", pad_type="esm", mask_template=raw_mask)
-DIST_MAT = ProteinDataType("DIST_MAT", pad_type="seq", mask_template=None, pair_type=True)
+RAW_SEQ = ProteinDataType("sequence", pad_type="esm", mask_template=raw_mask)
+DIST_MAT = ProteinDataType("distance_mat_stack", pad_type="seq", mask_template=None, pair_type=True)
+
+
+
+current_module = sys.modules[__name__]
+feature_to_type = {}
+for name, obj in inspect.getmembers(current_module):
+    if isinstance(obj, ProteinDataType):
+        feature_to_type[name] = obj
+
+
 
 @dataclass
 class TorchProtein:
