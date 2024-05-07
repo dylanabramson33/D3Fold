@@ -105,7 +105,6 @@ class TorchProtein:
     rigidgroups_gt_frames: ProteinData
     rigidgroups_gt_exists: ProteinData
     rigidgroups_group_exists: ProteinData
-    rigidgroups_gt_group_is_ambiguous: ProteinData
     rigidgroups_alt_gt_frames: ProteinData
     torsion_angles_sin_cos: ProteinData
     alt_torsion_angles_sin_cos: ProteinData
