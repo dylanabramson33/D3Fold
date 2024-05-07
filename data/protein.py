@@ -35,7 +35,6 @@ class ProteinDataType:
     def __str__(self):
         return self.type
 
-
 @dataclass
 class ProteinData():
     data: torch.Tensor
@@ -69,61 +68,66 @@ class ProteinData():
     def __str__(self):
         return str(self.data)
 
-feature_config_path = os.path.join(CONFIG_PATH, "features")
-@hydra.main(version_base=None, config_path=feature_config_path, config_name="config")
+
+mask_templates = {
+   "sequence" : np.array(["<mask>"])
+}
+
+@hydra.main(version_base=None, config_path=".", config_name="config")
 def build_types(cfg: DictConfig):
   types = {}
   features = cfg.features
   for feature in features:
-    type = ProteinDataType(
-      type=feature.type,
+    type_ = ProteinDataType(
+      type=feature.name,
       pad_type=feature.pad_type,
       meta_data=feature.meta_data if "meta_data" in feature else False,
-      pair_type=feature.pair_type if "pair_type" in feature else False
+      pair_type=feature.pair_type if "pair_type" in feature else False,
+      mask_template=mask_templates[feature.name] if feature.apply_mask else None,
     )
-    types[feature.name] = type
-
-  print(types)
-
+    types[feature.name] = type_
+  
+  return types
+  
 
 @dataclass
 class TorchProtein:
-    aatype: ProteinData
-    residue_index: ProteinData
-    all_atom_positions: ProteinData
-    all_atom_mask: ProteinData
-    resolution: ProteinData
-    is_distillation: ProteinData
-    atom14_atom_exists: ProteinData
-    residx_atom14_to_atom37: ProteinData
-    residx_atom37_to_atom14: ProteinData
-    atom37_atom_exists: ProteinData
-    atom14_gt_exists: ProteinData
-    atom14_gt_positions: ProteinData
-    atom14_alt_gt_positions: ProteinData
-    atom14_alt_gt_exists: ProteinData
-    rigidgroups_gt_frames: ProteinData
-    rigidgroups_gt_exists: ProteinData
-    rigidgroups_group_exists: ProteinData
-    rigidgroups_alt_gt_frames: ProteinData
-    torsion_angles_sin_cos: ProteinData
-    alt_torsion_angles_sin_cos: ProteinData
-    torsion_angles_mask: ProteinData
-    pseudo_beta: ProteinData
-    pseudo_beta_mask: ProteinData
-    backbone_rigid_tensor: ProteinData
-    backbone_rigid_mask: ProteinData
-    chi_angles_sin_cos: ProteinData
-    chi_mask: ProteinData
-    raw_seq: ProteinData
-    distance_mat_stack: ProteinData
-    type_dict: dict
+    aatype: ProteinData | None = None
+    residue_index: ProteinData | None = None
+    all_atom_positions: ProteinData | None = None
+    all_atom_mask: ProteinData | None = None
+    resolution: ProteinData | None = None
+    is_distillation: ProteinData | None = None
+    atom_exists: ProteinData | None = None
+    atom14_atom_exists: ProteinData | None = None
+    residx_atom14_to_atom37: ProteinData | None = None
+    residx_atom37_to_atom14: ProteinData | None = None
+    atom37_atom_exists: ProteinData  | None = None
+    atom14_gt_exists: ProteinData | None = None
+    atom14_gt_positions: ProteinData | None = None
+    atom14_alt_gt_positions: ProteinData | None = None
+    atom14_alt_gt_exists: ProteinData  | None = None
+    rigidgroups_gt_frames: ProteinData | None = None
+    rigidgroups_gt_exists: ProteinData | None = None
+    rigidgroups_group_exists: ProteinData | None = None
+    rigidgroups_group_is_ambiguous: ProteinData | None = None
+    rigidgroups_alt_gt_frames: ProteinData | None = None
+    torsion_angles_sin_cos: ProteinData | None = None
+    alt_torsion_angles_sin_cos: ProteinData | None = None
+    torsion_angles_mask: ProteinData | None = None
+    pseudo_beta: ProteinData | None = None
+    pseudo_beta_mask: ProteinData | None = None
+    backbone_rigid_tensor: ProteinData | None = None
+    backbone_rigid_mask: ProteinData | None = None
+    chi_angles_sin_cos: ProteinData | None = None
+    chi_mask: ProteinData | None = None
+    sequence: ProteinData | None = None
+    distance_mat_stack: ProteinData | None = None
 
     @classmethod
-    def from_dict(cls, data_dict):
-      type_dict = build_types()
-      data_dict = {key: ProteinData(data_dict[key], type_dict[key]) for key in data_dict.keys()}
-      return cls(**data_dict, type_dict=type_dict)
+    def from_dict(cls, data_dict, type_dict):
+      data_dict = {key: ProteinData(data_dict[key], type_dict[key]) for key in type_dict.keys()}
+      return cls(**data_dict)
 
     def mask_fields(self, ignore_mask_fields=(), mask_percent=0.15):
       num_samples = len(self.aatype.data) * mask_percent
@@ -178,7 +182,7 @@ class TorchProtein:
         field_data.crop_data(mask, crop_len)
 
     @classmethod
-    def from_pdb(cls, pdb_file):
+    def from_pdb(cls, pdb_file, type_dict):
       protein = RawProtein.from_pdb_path(pdb_file)
       feats = make_pdb_features(protein, "no desc", is_distillation=False)
       tensor_dic = np_to_tensor_dict(feats, feats.keys())
@@ -191,4 +195,4 @@ class TorchProtein:
       tensor_dic = transforms.get_backbone_frames(tensor_dic)
       tensor_dic = transforms.get_chi_angles(tensor_dic)
       tensor_dic = transforms.get_distance_mat_stack(tensor_dic)
-      return cls.from_dict(tensor_dic)
+      return cls.from_dict(tensor_dic, type_dict)

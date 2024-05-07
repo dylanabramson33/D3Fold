@@ -751,11 +751,3 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     buckets = torch.bucketize(dists, bins)
     protein["distance_mat_stack"] = buckets
     return protein
-
-def pad_features(protein, pad_size=400):
-    for k, v in protein.items():
-        if torch.is_tensor(v) and len(v.shape) > 1:
-            padded = torch.zeros(pad_size, *v.shape[1:], device=v.device)
-            padded[:v.shape[0]] = v
-            protein[k] = padded
-    return protein

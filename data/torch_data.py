@@ -7,12 +7,44 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
 from D3Fold.data.protein import TorchProtein
-
+import torch.nn.functional as F
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
 batch_converter = alphabet.get_batch_converter()
 FLOAT_TYPES = [torch.float32, torch.float64]
 INT_TYPES = [torch.int32, torch.int64]
+
+
+def pad_seqrep(list_of_tensors, key):
+    if "mask" in key:
+        seq = pad_sequence(
+           list_of_tensors, batch_first=True, padding_value=False
+        )
+    elif list_of_tensors[0].dtype in FLOAT_TYPES:
+        seq = pad_sequence(
+            list_of_tensors, batch_first=True, padding_value=torch.nan
+        )
+    elif list_of_tensors[0].dtype in INT_TYPES:
+        seq = pad_sequence(
+            list_of_tensors, batch_first=True, padding_value=-1
+        )
+    
+    return seq
+
+def pad_pairrep(list_of_tensors, pad_value=torch.nan):
+    maximum_residues = max(tensor.shape[0] for tensor in list_of_tensors)
+    padded_tensors = []
+    
+    for tensor in list_of_tensors:
+        # Pad the tensor to make it of size [P, P, S]
+        pad_width = (0, 0, 0, maximum_residues - tensor.shape[0], 0, maximum_residues - tensor.shape[1])
+        padded_tensor = F.pad(tensor, pad_width, mode='constant', value=pad_value)
+        padded_tensors.append(padded_tensor)
+    
+    # Stack the padded tensors to create a batched tensor
+    batched_tensor = torch.stack(padded_tensors)
+    return batched_tensor
+
 
 class SingleChainData(Dataset):
     def __init__(
@@ -88,8 +120,9 @@ class SingleChainData(Dataset):
         return geo_data, seq_data, raw_seq_data
 
 class Collator:
-    def __init__(self, follow_key=None):
+    def __init__(self, type_dict, follow_key=None):
         self.follow_key = follow_key
+        self.type_dict = type_dict
 
     def __call__(self, batch):
         geo_data_list = [d[0] for d in batch]
@@ -110,23 +143,15 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            if seq_data_list[0][key].shape == ():
+            if self.type_dict[key].type_.meta_data:
                 batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
-            elif "mask" in key:
-                seq = pad_sequence(
-                    [d[key] for d in seq_data_list], batch_first=True, padding_value=False
-                )
-                batch_data[key] = seq
-            elif seq_data_list[0][key].dtype in FLOAT_TYPES:
-                seq = pad_sequence(
-                    [d[key] for d in seq_data_list], batch_first=True, padding_value=torch.nan
-                )
-                batch_data[key] = seq
-            elif seq_data_list[0][key].dtype in INT_TYPES:
-                seq = pad_sequence(
-                    [d[key] for d in seq_data_list], batch_first=True, padding_value=-1
-                )
-                batch_data[key] = seq
+            elif not self.type_dict[key].type_.pair_rep:
+                list_of_tensors = [d[key] for d in seq_data_list]
+                seq = pad_seqrep(list_of_tensors, key)
+            elif self.type_dict[key].type_.pair_rep:
+                list_of_tensors = [d[key] for d in seq_data_list]
+                seq = pad_pairrep(list_of_tensors)
+        batch_data[key] = seq
         _, _, batch_tokens = batch_converter(raw_seq_data_list)
         batch_data.tokens = batch_tokens
 
