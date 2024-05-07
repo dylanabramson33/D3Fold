@@ -62,6 +62,7 @@ class SingleChainData(Dataset):
         self.chain_dir = chain_dir
         self.pickled_dir = pickled_dir
         self.limit_by = limit_by
+        self.type_dict = type_dict
 
         if not os.path.exists(self.pickled_dir) or force_process:
             self.preprocess()
@@ -71,7 +72,6 @@ class SingleChainData(Dataset):
         self.use_mask = use_mask
         self.use_crop = use_crop
         self.ignore_mask_fields = ignore_mask_fields
-        self.type_dict = type_dict
 
     def preprocess(self):
         os.makedirs(self.pickled_dir, exist_ok=True)
