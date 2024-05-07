@@ -1,16 +1,17 @@
-import inspect
-import sys
-
 from dataclasses import dataclass
-
+import os
 import random
+
 import numpy as np
 import torch
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
 from D3Fold.data.openfold.raw_protein import make_pdb_features
 from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
 from D3Fold.data.openfold import transforms
 from D3Fold.data.openfold.raw_protein import RawProtein
+from D3Fold.constants import CONFIG_PATH
 
 class ProteinDataType:
     def __init__(
@@ -68,46 +69,21 @@ class ProteinData():
     def __str__(self):
         return str(self.data)
 
-AA_TYPE = ProteinDataType("aatype", pad_type="seq", mask_template=None)
-RES_INDEX = ProteinDataType("residue_index", pad_type="seq", mask_template=None)
-AA_POSITIONS = ProteinDataType("all_atom_positions", pad_type="seq", mask_template=None)
-ALL_ATOM_MASK = ProteinDataType("all_atom_mask", pad_type="seq", mask_template=None)
-RESOLUTION = ProteinDataType("resolution", pad_type="seq", mask_template=None, meta_data=True)
-IS_DISTILLATION = ProteinDataType("is_distillation", pad_type="seq", mask_template=None, meta_data=True)
-ATOM14_EXISTS = ProteinDataType("atom14_atom_exists", pad_type="seq", mask_template=None)
-RESIDX_ATOM14_TO_ATOM37 = ProteinDataType("residx_atom14_to_atom37", pad_type="seq", mask_template=None)
-RESIDX_ATOM37_TO_ATOM14 = ProteinDataType("residx_atom37_to_atom14", pad_type="seq", mask_template=None)
-ATOM37_ATOM_EXISTS = ProteinDataType("atom37_atom_exists", pad_type="seq", mask_template=None)
-ATOM14_GT_EXISTS = ProteinDataType("atom14_gt_exists", pad_type="seq", mask_template=None)
-ATOM14_GT_POSITIONS = ProteinDataType("atom14_gt_positions", pad_type="seq", mask_template=None)
-ATOM14_ALT_GT_POSITIONS = ProteinDataType("atom14_alt_gt_positions", pad_type="seq", mask_template=None)
-ATOM14_ALT_GT_EXISTS = ProteinDataType("atom14_alt_gt_exists", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GT_FRAMES = ProteinDataType("rigidgroups_gt_frames", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GT_EXISTS = ProteinDataType("rigidgroups_gt_exists", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GROUP_EXISTS = ProteinDataType("rigidgroups_group_exists", pad_type="seq", mask_template=None)
-RIGIDGROUPS_GROUP_IS_AMBIGUOUS = ProteinDataType("rigidgroups_group_is_ambiguous", pad_type="seq", mask_template=None)
-RIGIDGROUPS_ALT_GT_FRAMES = ProteinDataType("rigidgroups_alt_gt_frames", pad_type="seq", mask_template=None)
-TORSION_ANGLES_SIN_COS = ProteinDataType("torsion_angles_sin_cos", pad_type="seq", mask_template=None)
-ALT_TORSION_ANGLES_SIN_COS = ProteinDataType("alt_torsion_angles_sin_cos", pad_type="seq", mask_template=None)
-TORSION_ANGLES_MASK = ProteinDataType("torsion_angles_mask", pad_type="seq", mask_template=None)
-PSEUDO_BETA = ProteinDataType("pseudo_beta", pad_type="seq", mask_template=None)
-PSEUDO_BETA_MASK = ProteinDataType("pseudo_beta_mask", pad_type="seq", mask_template=None)
-BACKBONE_RIGID_TENSOR = ProteinDataType("backbone_rigid_tensor", pad_type="seq", mask_template=None)
-BACKBONE_RIGID_MASK = ProteinDataType("backbone_rigid_mask", pad_type="seq", mask_template=None)
-CHI_ANGLES_SIN_COS = ProteinDataType("chi_angles_sin_cos", pad_type="seq", mask_template=None)
-CHI_MASK = ProteinDataType("chi_mask", pad_type="seq", mask_template=None)
-raw_mask = np.array(["<mask>"])
-RAW_SEQ = ProteinDataType("sequence", pad_type="esm", mask_template=raw_mask)
-DIST_MAT = ProteinDataType("distance_mat_stack", pad_type="seq", mask_template=None, pair_type=True)
-
-
-
-current_module = sys.modules[__name__]
-feature_to_type = {}
-for name, obj in inspect.getmembers(current_module):
-    if isinstance(obj, ProteinDataType):
-        feature_to_type[name] = obj
-
+feature_config_path = os.path.join(CONFIG_PATH, "features")
+@hydra.main(version_base=None, config_path=feature_config_path, config_name="config")
+def build_types(cfg: DictConfig):
+  types = {}
+  features = cfg.features
+  for feature in features:
+    type = ProteinDataType(
+      type=feature.type,
+      pad_type=feature.pad_type,
+      meta_data=feature.meta_data if "meta_data" in feature else False,
+      pair_type=feature.pair_type if "pair_type" in feature else False
+    )
+    types[feature.name] = type
+  
+  print(types)
 
 
 @dataclass
@@ -142,42 +118,13 @@ class TorchProtein:
     chi_mask: ProteinData
     raw_seq: ProteinData
     distance_mat_stack: ProteinData
-
+    type_dict: dict
 
     @classmethod
     def from_dict(cls, data_dict):
-      return cls(
-        aatype=ProteinData(data_dict["aatype"], AA_TYPE),
-        residue_index=ProteinData(data_dict["residue_index"], RES_INDEX),
-        all_atom_positions=ProteinData(data_dict["all_atom_positions"], AA_POSITIONS),
-        all_atom_mask=ProteinData(data_dict["all_atom_mask"], ALL_ATOM_MASK),
-        resolution=ProteinData(data_dict["resolution"], RESOLUTION),
-        is_distillation=ProteinData(data_dict["is_distillation"], IS_DISTILLATION),
-        atom14_atom_exists=ProteinData(data_dict["atom14_atom_exists"], ATOM14_EXISTS),
-        residx_atom14_to_atom37=ProteinData(data_dict["residx_atom14_to_atom37"], RESIDX_ATOM14_TO_ATOM37),
-        residx_atom37_to_atom14=ProteinData(data_dict["residx_atom37_to_atom14"], RESIDX_ATOM37_TO_ATOM14),
-        atom37_atom_exists=ProteinData(data_dict["atom37_atom_exists"], ATOM37_ATOM_EXISTS),
-        atom14_gt_exists=ProteinData(data_dict["atom14_gt_exists"], ATOM14_GT_EXISTS),
-        atom14_gt_positions=ProteinData(data_dict["atom14_gt_positions"], ATOM14_GT_POSITIONS),
-        atom14_alt_gt_positions=ProteinData(data_dict["atom14_alt_gt_positions"], ATOM14_ALT_GT_POSITIONS),
-        atom14_alt_gt_exists=ProteinData(data_dict["atom14_alt_gt_exists"], ATOM14_ALT_GT_EXISTS),
-        rigidgroups_gt_frames=ProteinData(data_dict["rigidgroups_gt_frames"], RIGIDGROUPS_GT_FRAMES),
-        rigidgroups_gt_exists=ProteinData(data_dict["rigidgroups_gt_exists"], RIGIDGROUPS_GT_EXISTS),
-        rigidgroups_group_exists=ProteinData(data_dict["rigidgroups_group_exists"], RIGIDGROUPS_GROUP_EXISTS),
-        rigidgroups_gt_group_is_ambiguous=ProteinData(data_dict["rigidgroups_group_is_ambiguous"], RIGIDGROUPS_GROUP_IS_AMBIGUOUS),
-        rigidgroups_alt_gt_frames=ProteinData(data_dict["rigidgroups_alt_gt_frames"], RIGIDGROUPS_ALT_GT_FRAMES),
-        torsion_angles_sin_cos=ProteinData(data_dict["torsion_angles_sin_cos"], TORSION_ANGLES_SIN_COS),
-        alt_torsion_angles_sin_cos=ProteinData(data_dict["alt_torsion_angles_sin_cos"], ALT_TORSION_ANGLES_SIN_COS),
-        torsion_angles_mask=ProteinData(data_dict["torsion_angles_mask"], TORSION_ANGLES_MASK),
-        pseudo_beta=ProteinData(data_dict["pseudo_beta"], PSEUDO_BETA),
-        pseudo_beta_mask=ProteinData(data_dict["pseudo_beta_mask"], PSEUDO_BETA_MASK),
-        backbone_rigid_tensor=ProteinData(data_dict["backbone_rigid_tensor"], BACKBONE_RIGID_TENSOR),
-        backbone_rigid_mask=ProteinData(data_dict["backbone_rigid_mask"], BACKBONE_RIGID_MASK),
-        chi_angles_sin_cos=ProteinData(data_dict["chi_angles_sin_cos"], CHI_ANGLES_SIN_COS),
-        chi_mask=ProteinData(data_dict["chi_mask"], CHI_MASK),
-        raw_seq=ProteinData(data_dict["sequence"], RAW_SEQ),
-        distance_mat_stack=ProteinData(data_dict["distance_mat_stack"], DIST_MAT)
-      )
+      type_dict = build_types()
+      data_dict = {key: ProteinData(data_dict[key], type_dict[key]) for key in data_dict.keys()}
+      return cls(**data_dict, type_dict=type_dict)
 
     def mask_fields(self, ignore_mask_fields=(), mask_percent=0.15):
       num_samples = len(self.aatype.data) * mask_percent
@@ -233,7 +180,6 @@ class TorchProtein:
 
     @classmethod
     def from_pdb(cls, pdb_file):
-
       protein = RawProtein.from_pdb_path(pdb_file)
       feats = make_pdb_features(protein, "no desc", is_distillation=False)
       tensor_dic = np_to_tensor_dict(feats, feats.keys())

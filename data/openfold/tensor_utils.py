@@ -46,16 +46,6 @@ def masked_mean(mask, value, dim, eps=1e-4):
     return torch.sum(mask * value, dim=dim) / (eps + torch.sum(mask, dim=dim))
 
 
-def pts_to_distogram(pts, min_bin=2.3125, max_bin=21.6875, no_bins=64):
-    boundaries = torch.linspace(
-        min_bin, max_bin, no_bins - 1, device=pts.device
-    )
-    dists = torch.sqrt(
-        torch.sum((pts.unsqueeze(-2) - pts.unsqueeze(-3)) ** 2, dim=-1)
-    )
-    return torch.bucketize(dists, boundaries)
-
-
 def dict_multimap(fn, dicts):
     first = dicts[0]
     new_dict = {}
