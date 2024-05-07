@@ -81,9 +81,9 @@ def build_types(cfg: DictConfig):
     type_ = ProteinDataType(
       type=feature.name,
       pad_type=feature.pad_type,
-      meta_data=feature.meta_data if "meta_data" in feature else False,
-      pair_type=feature.pair_type if "pair_type" in feature else False,
-      mask_template=mask_templates[feature.name] if "apply_mask" in feature else None,
+      meta_data=feature.get("meta_data", False),
+      pair_type=feature.get("pair_type", False),
+      mask_template=mask_templates.get(feature.name, None)
     )
     types[feature.name] = type_
   
