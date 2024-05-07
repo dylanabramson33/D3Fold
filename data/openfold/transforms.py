@@ -749,7 +749,7 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     dists = cdist(ca_pos, ca_pos)
     bins = torch.linspace(min_radius, max_radius, num_radii)
     buckets = torch.bucketize(dists, bins)
-    distograms = torch.zeros(dists.shape[0], dists.shape[0], num_radii + 1)
+    protein["distance_mat_stack"] = buckets
     return protein
 
 def pad_features(protein, pad_size=400):

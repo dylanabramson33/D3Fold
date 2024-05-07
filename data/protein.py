@@ -82,7 +82,7 @@ def build_types(cfg: DictConfig):
       pair_type=feature.pair_type if "pair_type" in feature else False
     )
     types[feature.name] = type
-  
+
   print(types)
 
 
