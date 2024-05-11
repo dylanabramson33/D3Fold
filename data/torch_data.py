@@ -110,6 +110,8 @@ class SingleChainData(Dataset):
         raw_seq_data = {}
         for field in data_fields:
             field_data = getattr(chain, field)
+            if isinstance(field_data, type(None)):
+                continue
             if field_data.type_.pad_type == "torch_geometric":
                 geo_data[field] = field_data.data
             elif field_data.type_.pad_type == "seq":
