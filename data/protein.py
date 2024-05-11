@@ -140,7 +140,9 @@ class TorchProtein:
         if field in ignore_mask_fields:
             continue
         field_data = getattr(self, field)
-        field_data.mask_data(mask)
+        if not isinstance(field_data, type(None)):
+
+          field_data.mask_data(mask)
 
       return mask
 
@@ -182,7 +184,8 @@ class TorchProtein:
         if field in ignore_mask_fields or isinstance(getattr(self, field), type(None)):
             continue
         field_data = getattr(self, field)
-        field_data.crop_data(mask, crop_len)
+        if not isinstance(field_data, type(None)):
+          field_data.crop_data(mask, crop_len)
 
     @classmethod
     def from_pdb(cls, pdb_file, type_dict):
