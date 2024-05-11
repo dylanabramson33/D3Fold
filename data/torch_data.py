@@ -129,7 +129,7 @@ class Collator:
         self.follow_key = follow_key
         self.type_dict = type_dict
         # add mask after the fact, hacky and bad
-        self.type_dict ["mask"] = ProteinDataType(
+        self.type_dict["mask"] = ProteinDataType(
             type="mask",
             pad_type="seq"
         )
