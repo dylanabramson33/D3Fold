@@ -749,5 +749,9 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     dists = cdist(ca_pos, ca_pos)
     bins = torch.linspace(min_radius, max_radius, num_radii)
     buckets = torch.bucketize(dists, bins)
+    scattered = torch.zeros(
+      len(buckets), len(buckets), num_radii + 1, device=buckets.device
+    )
+    scattered.scatter_(2, buckets.unsqueeze(-1), 1)
     protein["distance_mat_stack"] = buckets
     return protein
