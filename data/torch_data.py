@@ -36,7 +36,6 @@ def pad_pairrep(list_of_tensors, pad_value=torch.nan):
     padded_tensors = []
     
     for tensor in list_of_tensors:
-        print(tensor.shape)
         # Pad the tensor to make it of size [P, P, S]
         pad_width = (0, 0, 0, maximum_residues - tensor.shape[0], 0, maximum_residues - tensor.shape[1])
         padded_tensor = F.pad(tensor, pad_width, mode='constant', value=pad_value)
@@ -128,11 +127,6 @@ class Collator:
     def __init__(self, type_dict, follow_key=None):
         self.follow_key = follow_key
         self.type_dict = type_dict
-        # add mask after the fact, hacky and bad
-        self.type_dict["mask"] = ProteinDataType(
-            type="mask",
-            pad_type="seq"
-        )
 
     def __call__(self, batch):
         geo_data_list = [d[0] for d in batch]

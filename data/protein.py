@@ -99,7 +99,6 @@ class TorchProtein:
     all_atom_mask: ProteinData | None = None
     resolution: ProteinData | None = None
     is_distillation: ProteinData | None = None
-    atom_exists: ProteinData | None = None
     atom14_atom_exists: ProteinData | None = None
     residx_atom14_to_atom37: ProteinData | None = None
     residx_atom37_to_atom14: ProteinData | None = None
