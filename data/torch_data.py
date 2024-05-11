@@ -131,8 +131,9 @@ class Collator:
     def __call__(self, batch):
         geo_data_list = [d[0] for d in batch]
         seq_data_list = [d[1] for d in batch]
+        # kind of gross this is a seperate edge case
         raw_seq_data_list = [
-            (f"protein{i}", "".join(d[2]["raw_seq"])) for i, d in enumerate(batch)
+            (f"protein{i}", "".join(d[2]["sequence"])) for i, d in enumerate(batch)
         ]
         # check if any geometric data types
         if len(geo_data_list[0].keys()) == 0:
