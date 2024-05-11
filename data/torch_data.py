@@ -149,14 +149,14 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            if self.type_dict[key].meta_data:
-                batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
-            elif not self.type_dict[key].pair_type:
+            if not self.type_dict[key].pair_type or key == "mask":
                 list_of_tensors = [d[key] for d in seq_data_list]
                 seq = pad_seqrep(list_of_tensors, key)
             elif self.type_dict[key].pair_type:
                 list_of_tensors = [d[key] for d in seq_data_list]
                 seq = pad_pairrep(list_of_tensors)
+            elif self.type_dict[key].meta_data:
+                batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
         batch_data[key] = seq
         _, _, batch_tokens = batch_converter(raw_seq_data_list)
         batch_data.tokens = batch_tokens
