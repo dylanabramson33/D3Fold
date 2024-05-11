@@ -6,7 +6,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
-from D3Fold.data.protein import TorchProtein
+from D3Fold.data.protein import TorchProtein, ProteinData, ProteinDataType
 import torch.nn.functional as F
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -128,6 +128,11 @@ class Collator:
     def __init__(self, type_dict, follow_key=None):
         self.follow_key = follow_key
         self.type_dict = type_dict
+        # add mask after the fact, hacky and bad
+        self.type_dict ["mask"] = ProteinDataType(
+            type="mask",
+            pad_type="seq"
+        )
 
     def __call__(self, batch):
         geo_data_list = [d[0] for d in batch]
@@ -149,11 +154,9 @@ class Collator:
             del batch_data[f"{self.follow_key}_ptr"]
 
         for key in seq_data_list[0].keys():
-            is_meta_data = self.type_dict[key].get("meta_data", False)
-            if is_meta_data:
+            if self.type_dict[key].meta_data:
                 batch_data[key] = torch.tensor([d[key] for d in seq_data_list])
-            # this is bad 
-            if key == "mask" or not self.type_dict[key].pair_type:
+            elif not self.type_dict[key].pair_type:
                 list_of_tensors = [d[key] for d in seq_data_list]
                 seq = pad_seqrep(list_of_tensors, key)
             elif self.type_dict[key].pair_type:
