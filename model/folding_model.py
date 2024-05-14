@@ -97,9 +97,10 @@ class D3Fold(L.LightningModule):
         for loss_fn in self.losses:
             # this is shit but on right track
             if loss_fn.representation_target == "seq":
-                loss += loss_fn(s, batch)
+                loss_component = loss_fn(s, batch)
             if loss_fn.representation_target == "pair":
-                loss += loss_fn(z, batch)
+                loss_component = loss_fn(z, batch)
+            self.log(loss_fn.name, loss_component)
         self.log("train_loss", loss)
         return loss
 

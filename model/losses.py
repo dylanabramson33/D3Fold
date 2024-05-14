@@ -5,9 +5,10 @@ from D3Fold.data.openfold import residue_constants as rc
 
 
 class LossFn:
-    def __init__(self, loss_fn, representation_target="pair"):
+    def __init__(self, loss_fn, representation_target="pair", name=None):
         self.loss_fn = loss_fn
         self.representation_target = representation_target
+        self.name = name
 
 class PairwiseLoss(LossFn):
     def __init__(self, loss_fn, representation_target="pair"):
@@ -44,5 +45,5 @@ def sequence_loss(y_pred, data):
     y_pred = y_pred.permute(0, 2, 1)
     return loss_fn(y_pred, target)
 
-pairwise_loss = PairwiseLoss(pairwise_dist_loss)
-seq_loss = SequenceLoss(sequence_loss)
+pairwise_loss = PairwiseLoss(pairwise_dist_loss, name="pairwise_dist_loss")
+seq_loss = SequenceLoss(sequence_loss, name="sequence_mask_loss")
