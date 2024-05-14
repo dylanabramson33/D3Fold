@@ -34,4 +34,15 @@ def pairwise_dist_loss(y_pred, data):
     y_pred = y_pred.permute(0,3,1,2)
     return loss_fn(y_pred, gathered)
 
+def sequence_loss(y_pred, data):
+    loss_fn = nn.CrossEntropyLoss(reduction='mean')(y_pred, target)
+    B, R = y_pred.shape[0], y_pred.shape[1]
+    mask = torch.zeros(B, R, dtype=torch.bool, device=y_pred.device)
+    mask.scatter_(1, data.mask, True)
+    target = data.aatype
+    target = target.masked_fill(~mask, -100)
+    y_pred = y_pred.permute(0, 2, 1)
+    return loss_fn(y_pred, target)
+
 pairwise_loss = PairwiseLoss(pairwise_dist_loss)
+seq_loss = SequenceLoss(sequence_loss)

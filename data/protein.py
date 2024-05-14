@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import os
 import random
 
 import numpy as np
@@ -11,7 +10,6 @@ from D3Fold.data.openfold.raw_protein import make_pdb_features
 from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
 from D3Fold.data.openfold import transforms
 from D3Fold.data.openfold.raw_protein import RawProtein
-from D3Fold.constants import CONFIG_PATH
 
 class ProteinDataType:
     def __init__(

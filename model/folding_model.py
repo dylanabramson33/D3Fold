@@ -5,11 +5,11 @@ from mamba_ssm import Mamba
 import esm
 import lightning as L
 
-from D3Fold.model.losses import pairwise_loss
+from D3Fold.model.losses import pairwise_loss, seq_loss
 from invariant_point_attention import InvariantPointAttention
 from D3Fold.model import utils as model_utils
 
-class FoldingTrunk(nn.Module):
+class FoldingBlockESM(nn.Module):
     def __init__(self, s_dim_in=1280, s_dim_out=32, z_dim_in=1,z_dim_out=32, freeze_esm=False):
         super().__init__()
         model, _ = esm.pretrained.esm2_t33_650M_UR50D()
@@ -17,8 +17,16 @@ class FoldingTrunk(nn.Module):
         if freeze_esm:
             self.esm.eval()
             self.esm.requires_grad_(False)
-        self.s_project = nn.Linear(s_dim_in, s_dim_out)
-        self.z_project = nn.Linear(z_dim_in, z_dim_out)
+        self.s_project = nn.Sequential(
+            nn.Linear(s_dim_in, s_dim_out),
+            nn.ReLU(),
+            nn.Linear(s_dim_out, s_dim_out),
+        )
+        self.z_project = nn.Sequential(
+            nn.Linear(z_dim_in, z_dim_out),
+            nn.ReLU(),
+            nn.Linear(s_dim_out, s_dim_out),
+        )
         # this is black magic rn, I have no idea what Mamba does
         self.mamba = Mamba(
             d_model=s_dim_out, # Model dimension d_model
@@ -57,21 +65,25 @@ class IPA(nn.Module):
         return self.ipa(s, z, rotations=data.frames_R, translations=data.frames_t, mask=data.mask)
 
 class D3Fold(L.LightningModule):
-    def __init__(self, mamba_layers=3, freeze_esm=False):
+    def __init__(self,
+                 folding_block_layers=1,
+                 hidden_size=128,
+                 freeze_esm=False):
         super().__init__()
-        self.losses = [pairwise_loss]
+        self.losses = [pairwise_loss, seq_loss]
 
         esm_dim = 1280
-        self.folding_trunk = FoldingTrunk(
+
+        self.first_folding_block = FoldingBlockESM(
             s_dim_in=esm_dim,
-            s_dim_out=32,
+            s_dim_out=hidden_size,
             z_dim_in=1,
-            z_dim_out=32,
+            z_dim_out=hidden_size,
             freeze_esm=freeze_esm
         )
 
-        self.final_z_proj = nn.Linear(32, 1)
-        self.final_s_proj = nn.Linear(32, 21)
+        self.final_z_proj = nn.Linear(hidden_size, 1)
+        self.final_s_proj = nn.Linear(hidden_size, 21)
 
     def forward(self, batch):
         s, z = self.folding_trunk(batch)
