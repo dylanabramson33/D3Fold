@@ -26,7 +26,7 @@ def pad_seqrep(list_of_tensors, key):
         )
     elif list_of_tensors[0].dtype in INT_TYPES:
         seq = pad_sequence(
-            list_of_tensors, batch_first=True, padding_value=-1
+            list_of_tensors, batch_first=True, padding_value=-100
         )
     
     return seq
