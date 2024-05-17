@@ -621,6 +621,7 @@ def make_protein_features(
     all_atom_positions = protein_object.atom_positions
     all_atom_mask = protein_object.atom_mask
 
+    pdb_feats["chain_index"] = protein_object.chain_index.astype(np.int32)
     pdb_feats["all_atom_positions"] = all_atom_positions.astype(np.float32)
     pdb_feats["all_atom_mask"] = all_atom_mask.astype(np.float32)
 
