@@ -162,7 +162,7 @@ class RawProtein:
         parents_chain_index = None
         chain_id_mapping = {cid: n for n, cid in enumerate(string.ascii_uppercase)}
         chain_index = np.array([chain_id_mapping[cid] for cid in chain_ids])
-
+        
         return cls(
             atom_positions=np.array(atom_positions),
             atom_mask=np.array(atom_mask),
