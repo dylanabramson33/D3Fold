@@ -56,6 +56,7 @@ class SingleChainData(Dataset):
         use_mask=True,
         use_crop=True,
         ignore_mask_fields=(),
+        crop_len=400,
         type_dict=None,
     ):
     
@@ -63,6 +64,7 @@ class SingleChainData(Dataset):
         self.pickled_dir = pickled_dir
         self.limit_by = limit_by
         self.type_dict = type_dict
+        self.crop_len = crop_len
 
         if not os.path.exists(self.pickled_dir) or force_process:
             self.preprocess()
@@ -101,7 +103,7 @@ class SingleChainData(Dataset):
 
         data_fields = list(chain.__dataclass_fields__.keys())
         if self.use_crop:
-            chain.crop_fields()
+            chain.crop_fields(crop_len=self.crop_len)
         if self.use_mask:
             mask = chain.mask_fields(ignore_mask_fields=self.ignore_mask_fields)
 
