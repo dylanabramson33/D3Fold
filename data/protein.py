@@ -121,6 +121,7 @@ class TorchProtein:
     chi_mask: ProteinData | None = None
     sequence: ProteinData | None = None
     distance_mat_stack: ProteinData | None = None
+    chain_index : ProteinData | None = None
 
     @classmethod
     def from_dict(cls, data_dict, type_dict):
