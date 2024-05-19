@@ -755,3 +755,9 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     scattered.scatter_(2, buckets.unsqueeze(-1), 1)
     protein["distance_mat_stack"] = scattered
     return protein
+
+def get_quantized_phi_psi_omega(protein, n_bins=64):
+    phi_psi_omega = protein["torsion_angles_sin_cos"][:, 0:3]
+    quantized_phi_psi_omega = torch.round(phi_psi_omega * n_bins) + n_bins
+    protein["quantized_phi_psi_omega"] = quantized_phi_psi_omega
+    return protein
