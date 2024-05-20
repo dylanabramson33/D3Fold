@@ -188,7 +188,7 @@ class TorchProtein:
         if field in ignore_mask_fields or isinstance(getattr(self, field), type(None)):
             continue
         field_data = getattr(self, field)
-        field_data.crop_data(mask, crop_len)
+        field_data.crop_data(mask)
 
     def filter_fields(self, fields, filter_fn):
       masks = []
