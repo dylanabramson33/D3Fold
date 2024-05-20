@@ -96,8 +96,8 @@ class SingleChainData(Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        f = self.files[idx]
-        with open(os.path.join(self.pickled_dir, f), "rb") as f:
+        file_name = self.files[idx]
+        with open(os.path.join(self.pickled_dir, file_name), "rb") as f:
             # trunk-ignore(bandit/B301)
             chain = pickle.load(f)
 
@@ -123,7 +123,7 @@ class SingleChainData(Dataset):
 
         seq_data["mask"] = mask
         geo_data = Data.from_dict(geo_data)
-        return geo_data, seq_data, raw_seq_data, f
+        return geo_data, seq_data, raw_seq_data, file_name
 
 class Collator:
     def __init__(self, type_dict, follow_key=None):
