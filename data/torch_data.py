@@ -123,7 +123,7 @@ class SingleChainData(Dataset):
 
         seq_data["mask"] = mask
         geo_data = Data.from_dict(geo_data)
-        return geo_data, seq_data, raw_seq_data
+        return geo_data, seq_data, raw_seq_data, f
 
 class Collator:
     def __init__(self, type_dict, follow_key=None):
@@ -165,5 +165,6 @@ class Collator:
             batch_data[key] = seq
         _, _, batch_tokens = batch_converter(raw_seq_data_list)
         batch_data.tokens = batch_tokens
+        batch_data.file = [d[3] for d in batch]
 
         return batch_data

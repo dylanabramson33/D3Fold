@@ -39,6 +39,12 @@ class ProteinData():
     type_: ProteinDataType
     masked_data: torch.Tensor = None
 
+    def get_filter_mask(self, filter_fn):
+      if self.type_.pair_type:
+        return filter_fn(self.data).any(dim=0)
+      else:
+        return filter_fn(self.data)
+
     def mask_data(self, mask):
         if self.type_.meta_data or self.type_.mask_template is None:
           return
@@ -47,7 +53,7 @@ class ProteinData():
           mask = mask.numpy()
         self.data[mask] = self.type_.mask_template
 
-    def crop_data(self, mask, crop_len):
+    def crop_data(self, mask):
       if self.type_.meta_data:
         return
 
@@ -93,6 +99,7 @@ def build_types(cfg: DictConfig):
 class TorchProtein:
     aatype: ProteinData | None = None
     residue_index: ProteinData | None = None
+    file: ProteinData | None = None
     all_atom_positions: ProteinData | None = None
     all_atom_mask: ProteinData | None = None
     resolution: ProteinData | None = None
@@ -181,8 +188,21 @@ class TorchProtein:
         if field in ignore_mask_fields or isinstance(getattr(self, field), type(None)):
             continue
         field_data = getattr(self, field)
-        if not isinstance(field_data, type(None)):
-          field_data.crop_data(mask, crop_len)
+        field_data.crop_data(mask, crop_len)
+
+    def filter_fields(self, fields, filter_fn):
+      masks = []
+      for field in fields:
+        field_data = getattr(self, field)
+        mask = field_data.get_filter_mask(filter_fn)
+        masks.append(mask)
+      # take intersection of all masks
+      mask = torch.stack(masks).any(dim=0)
+      for field in self.__dataclass_fields__.keys():
+        if isinstance(getattr(self, field), type(None)):
+          continue
+        field_data = getattr(self, field)
+        field_data.crop_data(mask)
 
     @classmethod
     def from_pdb(cls, pdb_file, type_dict):
