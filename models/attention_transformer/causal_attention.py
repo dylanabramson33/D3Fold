@@ -21,6 +21,7 @@ class CausalAttention(nn.Module):
         if embed_dim % num_heads != 0:
             raise ValueError(f"Embedding dimension {embed_dim} should be divisible by the number of heads {num_heads}.")
         self.embed_dim = embed_dim
+        self.pos_encoder = PositionalEncoding(embed_dim)
         self.num_heads = num_heads
         self.head_dim = embed_dim // num_heads
 
@@ -29,6 +30,7 @@ class CausalAttention(nn.Module):
         self.value = nn.Linear(embed_dim, embed_dim)
 
         self.softmax = nn.Softmax(dim=-1)
+
 
     def forward(self, x, mask):
         # replace padding index with num_tokens - 1

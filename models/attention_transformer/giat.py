@@ -2,6 +2,7 @@ import lightning as L
 import torch
 from torch import nn
 
+from D3Fold.models.common.positional_encoding import PositionalEncoding
 from D3Fold.models.attention_transformer.causal_attention import AttentionBlock, create_causal_mask
 from D3Fold.models.attention_transformer.causal_ipa import IPABlock
 
@@ -18,6 +19,7 @@ class GIAT(L.LightningModule):
     ):
         super(GIAT, self).__init__()
         self.embedder = nn.Embedding(num_tokens, embed_dim)
+        self.positional_embedding = PositionalEncoding(embed_dim)
         self.pad_value = pad_value
 
         self.final_cos_phi = nn.Linear(embed_dim, num_output_tokens)
@@ -52,6 +54,7 @@ class GIAT(L.LightningModule):
         x = data.aatype
         x = x.masked_fill(x == self.pad_value, self.embedder.num_embeddings - 1)
         x = self.embedder(x)
+        x = x + self.positional_embedding(data)
         mask = create_causal_mask(x.size(1), x.device)
         valid_frame_mask = data.backbone_rigid_mask.bool()
         for block in self.attention_blocks:
