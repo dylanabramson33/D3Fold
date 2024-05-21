@@ -7,10 +7,10 @@ from D3Fold.models.attention_transformer.causal_ipa import IPABlock
 
 class GIAT(L.LightningModule):
     def __init__(
-        self, 
+        self,
         num_tokens,
         num_output_tokens,
-        embed_dim=256, 
+        embed_dim=256,
         num_heads=4,
         num_attention_layers=4,
         num_ipa_layers=4,
@@ -19,7 +19,7 @@ class GIAT(L.LightningModule):
         super(GIAT, self).__init__()
         self.embedder = nn.Embedding(num_tokens, embed_dim)
         self.pad_value = pad_value
-        
+
         self.final_cos_phi = nn.Linear(embed_dim, num_output_tokens)
         self.final_sin_phi = nn.Linear(embed_dim, num_output_tokens)
         self.final_cos_psi = nn.Linear(embed_dim, num_output_tokens)
@@ -53,24 +53,24 @@ class GIAT(L.LightningModule):
         x = x.masked_fill(x == self.pad_value, self.embedder.num_embeddings - 1)
         x = self.embedder(x)
         mask = create_causal_mask(x.size(1), x.device)
-
+        valid_frame_mask = data.backbone_rigid_mask.bool()
         for block in self.attention_blocks:
             x = block(x, mask)
 
+
         rotations = data.backbone_rigid_tensor[...,:3, :3]
         translations = data.backbone_rigid_tensor[...,:3, 3]
-
         for block in self.ipa_blocks:
             x = block(
                 x,
                 rotations = rotations,
                 translations = translations,
-                mask = mask              
+                causal_mask = mask,
+                null_mask = valid_frame_mask
             )
-
         cos_pred_phi = self.final_cos_phi(x)
         sin_pred_phi = self.final_sin_phi(x)
-        
+
         cos_pred_psi = self.final_cos_psi(x)
         sin_pred_psi = self.final_sin_psi(x)
 
@@ -80,22 +80,29 @@ class GIAT(L.LightningModule):
         phi = torch.stack([cos_pred_phi, sin_pred_phi], dim=-1)
         psi = torch.stack([cos_pred_psi, sin_pred_psi], dim=-1)
         omega = torch.stack([cos_pred_omega, sin_pred_omega], dim=-1)
-        
+
         return phi, psi, omega
-    
+
     def training_step(self, batch, batch_idx):
         cross = nn.CrossEntropyLoss()
         phi_pred, psi_pred, omega_pred = self(batch)
         phi_pred = phi_pred.permute(0,2,1,3)
         psi_pred = psi_pred.permute(0,2,1,3)
         omega_pred = omega_pred.permute(0,2,1,3)
-        phi = batch.quantized_phi_psi_omega[:,:,0,:]
-        psi = batch.quantized_phi_psi_omega[:,:,1,:]
-        omega = batch.quantized_phi_psi_omega[:,:,2,:]
 
-        phi[torch.isnan(phi)] = -100
-        psi[torch.isnan(psi)] = -100
-        omega[torch.isnan(omega)] = -100
+        phi = batch.quantized_phi_psi_omega[:,:,0,:].roll(1,dims=1)
+        psi = batch.quantized_phi_psi_omega[:,:,1,:].roll(1,dims=1)
+        omega = batch.quantized_phi_psi_omega[:,:,2,:].roll(1,dims=1)
+
+        phi_mask = batch.torsion_angles_mask[0,:,0, None].bool()
+        psi_mask = batch.torsion_angles_mask[0,:,1, None].bool()
+        omega_mask = batch.torsion_angles_mask[0,:,2, None].bool()
+        phi = torch.where(phi_mask, phi, -100)
+        psi = torch.where(psi_mask, psi, -100)
+        omega = torch.where(omega_mask, omega, -100)
+        phi[:, -1] = -100
+        psi[:, -1] = -100
+        omega[:, -1] = -100
 
         phi_loss = cross(phi_pred, phi.long())
         psi_loss = cross(psi_pred, psi.long())

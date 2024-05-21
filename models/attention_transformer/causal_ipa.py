@@ -92,7 +92,8 @@ class InvariantPointAttention(nn.Module):
         *,
         rotations,
         translations,
-        mask = None
+        causal_mask = None,
+        null_mask = None,
     ):
         x, b, h, eps, require_pairwise_repr = single_repr, single_repr.shape[0], self.heads, self.eps, self.require_pairwise_repr
         assert not (require_pairwise_repr and not exists(pairwise_repr)), 'pairwise representation must be given as second argument'
@@ -142,22 +143,21 @@ class InvariantPointAttention(nn.Module):
             attn_logits = attn_logits + attn_logits_pairwise
 
         # mask
-
-        if exists(mask):
+        if exists(causal_mask):
             mask_value = max_neg_value(attn_logits)
-            attn_logits = attn_logits.masked_fill(~mask, mask_value)
+            attn_logits = attn_logits.masked_fill(~causal_mask, mask_value)
+            null_mask = repeat(null_mask, 'b n -> (b h) n', h = h)
+            null_mask = null_mask.unsqueeze(1).expand(-1, x.shape[1], -1)
+            attn_logits = attn_logits.masked_fill(~null_mask, mask_value)
 
-        # attention
 
         attn = attn_logits.softmax(dim = - 1)
-
         with disable_tf32(), autocast(enabled = False):
             # disable TF32 for precision
 
             # aggregate values
 
             results_scalar = einsum('b i j, b j d -> b i d', attn, v_scalar)
-
             attn_with_heads = rearrange(attn, '(b h) i j -> b h i j', h = h)
 
             if require_pairwise_repr:
@@ -188,6 +188,8 @@ class InvariantPointAttention(nn.Module):
 
         results = torch.cat(results, dim = -1)
         return self.to_out(results)
+
+
 
 # one transformer block based on IPA
 
@@ -246,4 +248,3 @@ class IPABlock(nn.Module):
         x = self.post_ff_dropout(x)
         x = self.ff_norm(x) if post_norm else x
         return x
-

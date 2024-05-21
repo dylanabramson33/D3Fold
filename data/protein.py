@@ -190,7 +190,7 @@ class TorchProtein:
         field_data = getattr(self, field)
         field_data.crop_data(mask)
 
-    def filter_fields(self, fields, filter_fn):
+    def filter_fields(self, filter_fn, fields):
       masks = []
       for field in fields:
         field_data = getattr(self, field)

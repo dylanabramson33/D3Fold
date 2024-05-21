@@ -55,9 +55,10 @@ class SingleChainData(Dataset):
         limit_by=None,
         use_mask=True,
         use_crop=True,
-        ignore_mask_fields=(),
+        ignore_mask_fields=[],
         crop_len=400,
         type_dict=None,
+        filter_fns_with_fields=[],
     ):
     
         self.chain_dir = chain_dir
@@ -65,7 +66,7 @@ class SingleChainData(Dataset):
         self.limit_by = limit_by
         self.type_dict = type_dict
         self.crop_len = crop_len
-
+        self.filter_fns_with_fields = filter_fns_with_fields
         if not os.path.exists(self.pickled_dir) or force_process:
             self.preprocess()
 
@@ -102,6 +103,8 @@ class SingleChainData(Dataset):
             chain = pickle.load(f)
 
         data_fields = list(chain.__dataclass_fields__.keys())
+        for (filter_fn, fields) in self.filter_fns_with_fields:
+            chain.filter_fields(filter_fn, fields)
         if self.use_crop:
             chain.crop_fields(crop_len=self.crop_len)
         if self.use_mask:
