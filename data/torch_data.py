@@ -6,7 +6,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
-from D3Fold.data.protein import TorchProtein, ProteinData, ProteinDataType
+from D3Fold.data.protein import TorchProtein
 import torch.nn.functional as F
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
@@ -22,7 +22,7 @@ def pad_seqrep(list_of_tensors, key):
         )
     elif list_of_tensors[0].dtype in FLOAT_TYPES:
         seq = pad_sequence(
-            list_of_tensors, batch_first=True, padding_value=torch.nan
+            list_of_tensors, batch_first=True, padding_value=0
         )
     elif list_of_tensors[0].dtype in INT_TYPES:
         seq = pad_sequence(
@@ -31,7 +31,7 @@ def pad_seqrep(list_of_tensors, key):
     
     return seq
 
-def pad_pairrep(list_of_tensors, pad_value=torch.nan):
+def pad_pairrep(list_of_tensors, pad_value=0):
     maximum_residues = max(tensor.shape[0] for tensor in list_of_tensors)
     padded_tensors = []
     
