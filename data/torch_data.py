@@ -69,7 +69,7 @@ class SingleChainData(Dataset):
         self.crop_len = crop_len
         self.filter_fns_with_fields = filter_fns_with_fields
         self.force_process = force_process
-        if not os.path.exists(self.pickled_dir) and not skip_preprocess:
+        if not skip_preprocess:
             self.preprocess()
 
         self.length = len(os.listdir(self.pickled_dir))
