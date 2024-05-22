@@ -102,11 +102,11 @@ class GIAT(L.LightningModule):
         aa = batch.aatype.long()
         aa = aa.masked_fill(aa == self.pad_value, -100)
         aa = aa.masked_fill(aa == 20, -100)
-        aa = aa.roll(1,dims=1)
+        aa = aa.roll(-1,dims=1)
 
-        phi = batch.quantized_phi_psi_omega[:,:,0,:].roll(1,dims=1)
-        psi = batch.quantized_phi_psi_omega[:,:,1,:].roll(1,dims=1)
-        omega = batch.quantized_phi_psi_omega[:,:,2,:].roll(1,dims=1)
+        phi = batch.quantized_phi_psi_omega[:,:,0,:].roll(-1,dims=1)
+        psi = batch.quantized_phi_psi_omega[:,:,1,:].roll(-1,dims=1)
+        omega = batch.quantized_phi_psi_omega[:,:,2,:].roll(-1,dims=1)
 
         phi_mask = batch.torsion_angles_mask[0,:,0, None].bool()
         psi_mask = batch.torsion_angles_mask[0,:,1, None].bool()
