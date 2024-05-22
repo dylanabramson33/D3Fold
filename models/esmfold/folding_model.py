@@ -15,7 +15,7 @@ from D3Fold.data.openfold.residue_constants import (
 from D3Fold.model.losses import pairwise_loss, seq_loss
 from invariant_point_attention import InvariantPointAttention
 from D3Fold.model import utils as model_utils
-from D3Fold.model.common import PositionalEncoding
+from D3Fold.model.common.positional_encoding import PositionalEncoding
 
 
 class ESMEmbedder(nn.Module):
