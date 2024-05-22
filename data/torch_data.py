@@ -51,7 +51,8 @@ class SingleChainData(Dataset):
         self,
         chain_dir=None,
         pickled_dir=None,
-        force_process=True,
+        force_process=False,
+        skip_preprocess=False,
         limit_by=None,
         use_mask=True,
         use_crop=True,
@@ -67,7 +68,8 @@ class SingleChainData(Dataset):
         self.type_dict = type_dict
         self.crop_len = crop_len
         self.filter_fns_with_fields = filter_fns_with_fields
-        if not os.path.exists(self.pickled_dir) or force_process:
+        self.force_process = force_process
+        if not os.path.exists(self.pickled_dir) and not skip_preprocess:
             self.preprocess()
 
         self.length = len(os.listdir(self.pickled_dir))
@@ -79,6 +81,8 @@ class SingleChainData(Dataset):
     def preprocess(self):
         os.makedirs(self.pickled_dir, exist_ok=True)
         for i, file in enumerate(os.listdir(self.chain_dir)):
+            if file in os.listdir(self.pickled_dir) and not self.force_process:
+                continue
             if self.limit_by and i > self.limit_by:
                 break
             if file.endswith(".ent"):

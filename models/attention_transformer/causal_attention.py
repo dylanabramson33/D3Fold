@@ -30,7 +30,6 @@ class CausalAttention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
 
-
     def forward(self, x, mask):
         # replace padding index with num_tokens - 1
         batch_size, seq_len, _ = x.size()

@@ -19,15 +19,18 @@ class GIAT(L.LightningModule):
     ):
         super(GIAT, self).__init__()
         self.embedder = nn.Embedding(num_tokens, embed_dim)
-        self.positional_embedding = PositionalEncoding(embed_dim)
+        self.positional_encoding = PositionalEncoding(embed_dim, max_len=10000)
         self.pad_value = pad_value
 
+        # gonna refactor this to be one weight matrix
         self.final_cos_phi = nn.Linear(embed_dim, num_output_tokens)
         self.final_sin_phi = nn.Linear(embed_dim, num_output_tokens)
         self.final_cos_psi = nn.Linear(embed_dim, num_output_tokens)
         self.final_sin_psi = nn.Linear(embed_dim, num_output_tokens)
         self.final_cos_omega = nn.Linear(embed_dim, num_output_tokens)
         self.final_sin_omega = nn.Linear(embed_dim, num_output_tokens)
+
+        self.final_lang = nn.Linear(embed_dim, num_tokens)
 
         self.attention_blocks = nn.ModuleList(
             [
@@ -54,7 +57,7 @@ class GIAT(L.LightningModule):
         x = data.aatype
         x = x.masked_fill(x == self.pad_value, self.embedder.num_embeddings - 1)
         x = self.embedder(x)
-        x = x + self.positional_embedding(data)
+        x = x + self.positional_encoding(data)
         mask = create_causal_mask(x.size(1), x.device)
         valid_frame_mask = data.backbone_rigid_mask.bool()
         for block in self.attention_blocks:
@@ -84,14 +87,22 @@ class GIAT(L.LightningModule):
         psi = torch.stack([cos_pred_psi, sin_pred_psi], dim=-1)
         omega = torch.stack([cos_pred_omega, sin_pred_omega], dim=-1)
 
-        return phi, psi, omega
+        pred_aa = self.final_lang(x)
+
+        return phi, psi, omega, pred_aa
 
     def training_step(self, batch, batch_idx):
         cross = nn.CrossEntropyLoss()
-        phi_pred, psi_pred, omega_pred = self(batch)
+        phi_pred, psi_pred, omega_pred, pred_aa = self(batch)
         phi_pred = phi_pred.permute(0,2,1,3)
         psi_pred = psi_pred.permute(0,2,1,3)
         omega_pred = omega_pred.permute(0,2,1,3)
+        pred_aa = pred_aa.permute(0,2,1)
+
+        aa = batch.aatype.long()
+        aa = aa.masked_fill(aa == self.pad_value, -100)
+        aa = aa.masked_fill(aa == 20, -100)
+        aa = aa.roll(1,dims=1)
 
         phi = batch.quantized_phi_psi_omega[:,:,0,:].roll(1,dims=1)
         psi = batch.quantized_phi_psi_omega[:,:,1,:].roll(1,dims=1)
@@ -110,8 +121,15 @@ class GIAT(L.LightningModule):
         phi_loss = cross(phi_pred, phi.long())
         psi_loss = cross(psi_pred, psi.long())
         omega_loss = cross(omega_pred, omega.long())
-        full_loss = phi_loss + psi_loss + omega_loss
-        self.log("loss", full_loss)
+
+        lang_loss = cross(pred_aa, aa.long())
+
+        angle_loss = phi_loss + psi_loss + omega_loss
+        full_loss = angle_loss + lang_loss
+
+        self.log("angle_loss", angle_loss)
+        self.log("lang_loss", lang_loss)
+        self.log("full_loss", full_loss)
         return full_loss
 
     def configure_optimizers(self):
