@@ -3,15 +3,36 @@ import torch
 import pyrosetta
 from pyrosetta import rosetta
 
+from D3Fold.rosetta.adapters import create_from_torsion, poses_to_dataset
+from dataclasses import dataclass
+
 # Initialize PyRosetta
 pyrosetta.init()
 
-class Sampler:
-    def __init__(self):
-        self.pose = Sampler.create_inital_rosetta() 
+@dataclass
+class SeedStructure:
+    sequence: str
+    phis: np.array
+    psis: np.array
+    omegas: np.array
 
-    
-    
+class Sampler:
+    def __init__(self, seed_structure: SeedStructure):
+        self.pose = create_from_torsion(
+            seed_structure.sequence,
+            seed_structure.phis,
+            seed_structure.psis,
+            seed_structure.omegas
+        )
+
+        self.dataset = poses_to_dataset(
+            [self.pose],
+            type_dict=None,
+            pdb_path="./denovo_pdbs",
+            processed_path="./processed_pdbs",
+            output_names=["seed_structure"],
+        )
+
 # Idealized bond lengths (in Angstroms)
 def unquantize_phi_psi_omega(data, n_bins=64):
   phi_psi_omega = data["quantized_phi_psi_omega"] - n_bins
