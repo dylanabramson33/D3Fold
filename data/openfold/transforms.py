@@ -757,8 +757,8 @@ def get_distance_mat_stack(protein, min_radius=5, max_radius=26, num_radii=64):
     return protein
 
 def get_quantized_phi_psi_omega(protein, n_bins=64):
-    print(phi_psi_omega = protein["torsion_angles_sin_cos"][:, 0:3].max())
-    print(phi_psi_omega = protein["torsion_angles_sin_cos"][:, 0:3].min())
+    print(protein["torsion_angles_sin_cos"][:, 0:3].max())
+    print(protein["torsion_angles_sin_cos"][:, 0:3].min())
     phi_psi_omega = protein["torsion_angles_sin_cos"][:, 0:3] / 360.0
     quantized_phi_psi_omega = torch.round(phi_psi_omega * n_bins) + n_bins
     protein["quantized_phi_psi_omega"] = quantized_phi_psi_omega
