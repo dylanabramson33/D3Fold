@@ -16,7 +16,7 @@ def create_causal_mask(seq_len, device):
     return mask
 
 class CausalAttention(nn.Module):
-    def __init__(self, num_tokens, embed_dim, num_heads):
+    def __init__(self, embed_dim, num_heads):
         super(CausalAttention, self).__init__()
         if embed_dim % num_heads != 0:
             raise ValueError(f"Embedding dimension {embed_dim} should be divisible by the number of heads {num_heads}.")
@@ -27,24 +27,16 @@ class CausalAttention(nn.Module):
         self.query = nn.Linear(embed_dim, embed_dim)
         self.key = nn.Linear(embed_dim, embed_dim)
         self.value = nn.Linear(embed_dim, embed_dim)
-
+        self.attn = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x, mask):
         # replace padding index with num_tokens - 1
-        batch_size, seq_len, _ = x.size()
+        q = self.query(x)
+        k = self.key(x)
+        v = self.value(x)
 
-        q = self.query(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-        k = self.key(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-        v = self.value(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-
-        attn_weights = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
-        attn_weights = attn_weights.masked_fill(mask == 0, float('-inf'))
-        attn_weights = self.softmax(attn_weights)
-
-        attn_output = torch.matmul(attn_weights, v)
-        attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_len, self.embed_dim)
-
+        attn_output, _ = self.attn(q, k, v, attn_mask=~mask)
         return attn_output
 
 class AttentionBlock(nn.Module):

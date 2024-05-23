@@ -175,3 +175,13 @@ class Collator:
         batch_data.file = [d[3] for d in batch]
 
         return batch_data
+
+def select_residues(data, index):
+    data = data.clone()
+    for key in data.keys():
+      try:
+        data[key] = data[key][:,index]
+      except Exception as e:
+        print(e)
+        pass
+    return data
