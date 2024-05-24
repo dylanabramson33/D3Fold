@@ -762,11 +762,6 @@ def get_quantized_phi_psi_omega(protein, n_bins=64):
     protein["quantized_phi_psi_omega"] = quantized_phi_psi_omega
     return protein
 
-def unquantize_phi_psi_omega(protein, n_bins=64):
-    phi_psi_omega = protein["quantized_phi_psi_omega"] - n_bins
-    protein["phi_psi_omega"] = phi_psi_omega / n_bins * 180.0
-    return protein
-
 def convert_angles_to_degrees(protein):
     protein["torsion_angles_sin_cos"] = torch.atan2(
         protein["torsion_angles_sin_cos"][..., 0],

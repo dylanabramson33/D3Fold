@@ -59,15 +59,15 @@ def poses_to_dataset(
 ):
     os.makedirs(pdb_path, exist_ok=True)
 
-    for pose in poses:
-        pose.dump_pdb(f"{pdb_path}/{output_names}.pdb")
+    for pose,name in zip(poses,output_names) :
+        pose.dump_pdb(f"{pdb_path}/{name}.pdb")
     
     dataset = SingleChainData(
         chain_dir=pdb_path,
         pickled_dir=processed_path,
         use_mask=True,
         force_process=False,
-        skip_preprocess=True,
+        skip_preprocess=False,
         limit_by=1000,
         type_dict=type_dict,
         filter_fns_with_fields=filtern_fns_w_fields
