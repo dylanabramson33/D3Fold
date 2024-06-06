@@ -22,7 +22,8 @@ def create_from_torsion(
     for i in range(1, len(sequence) + 1):
         pose.set_phi(i, phis[i - 1])
         pose.set_psi(i, psis[i - 1])
-        pose.set_omega(i, omegas[i - 1])
+        if i < len(sequence):
+            pose.set_omega(i, omegas[i])
     
     return pose
 
@@ -39,7 +40,7 @@ def append_torsion(
     new_residue = rosetta.core.conformation.ResidueFactory.create_residue(res_type)
     # Append the new residue to the pose
     rosetta.core.pose.remove_upper_terminus_type_from_pose_residue(pose, pose.total_residue())
-    pose.append_residue_by_bond(new_residue)
+    pose.append_residue_by_bond(new_residue, build_ideal_bond=True)
 
     # Get the position of the new residue
     new_residue_index = pose.total_residue()
