@@ -14,7 +14,6 @@ batch_converter = alphabet.get_batch_converter()
 FLOAT_TYPES = [torch.float32, torch.float64]
 INT_TYPES = [torch.int32, torch.int64]
 
-
 def pad_seqrep(list_of_tensors, key):
     if "mask" in key:
         seq = pad_sequence(
