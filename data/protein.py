@@ -130,7 +130,7 @@ class TorchProtein:
     distance_mat_stack: ProteinData | None = None
     chain_inde : ProteinData | None = None
     quantized_phi_psi_omega: ProteinData | None = None
-    pairwise_dist : ProteinData | None = None
+    pairwise_seq_dist : ProteinData | None = None
 
     @classmethod
     def from_dict(cls, data_dict, type_dict):
@@ -221,5 +221,5 @@ class TorchProtein:
       tensor_dic = transforms.get_distance_mat_stack(tensor_dic)
       tensor_dic = transforms.convert_angles_to_degrees(tensor_dic)
       tensor_dic = transforms.get_quantized_phi_psi_omega(tensor_dic)
-      tensor_dic = transforms.relative_positional_encoding(tensor_dic)
+      tensor_dic = transforms.relative_positions(tensor_dic)
       return cls.from_dict(tensor_dic, type_dict)

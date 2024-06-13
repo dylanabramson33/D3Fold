@@ -769,8 +769,9 @@ def convert_angles_to_degrees(protein):
     ) * 180.0 / np.pi
     return protein
 
-def relative_positional_encoding(protein):
+def relative_positions(protein):
     num_res = protein["aatype"].shape[-1]
     pairwise_dist = protein["residue_index"].expand(num_res, -1) - protein["residue_index"].unsqueeze(-1)
     pairwise_dist = torch.abs(pairwise_dist).clamp(max=32)
-    protein["pairwise_dist"] = pairwise_dist
+    protein["pairwise_seq_dist"] = pairwise_dist
+    return protein
