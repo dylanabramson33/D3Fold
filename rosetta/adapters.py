@@ -60,9 +60,9 @@ def poses_to_dataset(
 ):
     os.makedirs(pdb_path, exist_ok=True)
 
-    for pose,name in zip(poses,output_names) :
-        pose.dump_pdb(f"{pdb_path}/{name}.pdb")
-    
+    for pose,name in zip(poses,output_names):
+        pose.dump_pdb(f"{pdb_path}/{name}.ent")
+
     dataset = SingleChainData(
         chain_dir=pdb_path,
         pickled_dir=processed_path,
