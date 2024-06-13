@@ -47,6 +47,8 @@ features:
     pad_type: 'seq'
   - name: 'quantized_phi_psi_omega'
     pad_type: 'seq'
+  - name: 'pairwise_dist'
+    pad_type: 'pair'
 max_length: 400
   
 

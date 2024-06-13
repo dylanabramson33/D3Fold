@@ -220,4 +220,5 @@ class TorchProtein:
       tensor_dic = transforms.get_distance_mat_stack(tensor_dic)
       tensor_dic = transforms.convert_angles_to_degrees(tensor_dic)
       tensor_dic = transforms.get_quantized_phi_psi_omega(tensor_dic)
+      tensor_dic = transforms.relative_positional_encoding(tensor_dic)
       return cls.from_dict(tensor_dic, type_dict)

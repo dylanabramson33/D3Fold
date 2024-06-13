@@ -145,3 +145,13 @@ def multinomial(pred_phi, pred_psi, pred_omega, pred_aa):
     samp_omega = torch.multinomial(pred_omega, 1)
     samp_aa = torch.multinomial(pred_aa, 1)
     return samp_phi[0], samp_psi[0], samp_omega[0], samp_aa[0]
+
+def select_residues(data, index):
+    data = data.clone()
+    for key in data.keys():
+      try:
+        data[key] = data[key][:,index]
+      except Exception as e:
+        print(e)
+        pass
+    return data
