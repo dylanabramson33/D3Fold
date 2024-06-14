@@ -15,6 +15,29 @@ def create_causal_mask(seq_len, device):
     mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool)).to(device)
     return mask
 
+def create_block_lowert_mask(seq_len, block_size, device):
+    block = torch.ones((block_size,block_size)).to(device)
+
+    # Assume all blocks are of the same size (2x2 in this case)
+    block_size = block.size(0)
+
+    # Define the number of block rows and columns
+    num_blocks = seq_len
+
+    # Initialize a large zero matrix
+    result = torch.zeros(block_size * num_blocks, block_size * num_blocks, device=device)
+
+    # Fill in the lower triangular part with the blocks
+    # blocks = [[A, None, None, None], [A, A, None, None], [A, A, A, None], [A, A, A,A]]
+    # do similar pattern to above but for num_blocks
+    blocks = [[block if i >= j else None for j in range(num_blocks)] for i in range(num_blocks)]
+
+    for i in range(num_blocks):
+        for j in range(i + 1):
+            if blocks[i][j] is not None:
+                result[i*block_size:(i+1)*block_size, j*block_size:(j+1)*block_size] = blocks[i][j]
+    return result
+
 class CausalAttention(nn.Module):
     def __init__(self, embed_dim, num_heads):
         super(CausalAttention, self).__init__()
@@ -30,13 +53,13 @@ class CausalAttention(nn.Module):
         self.attn = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x, mask):
+    def forward(self, x, mask=None):
         # replace padding index with num_tokens - 1
         q = self.query(x)
         k = self.key(x)
         v = self.value(x)
-
-        attn_output, _ = self.attn(q, k, v, attn_mask=~mask)
+        
+        attn_output, _ = self.attn(q, k, v, attn_mask=~mask if isinstance(mask, type(None)) else None)
         return attn_output
 
 class AttentionBlock(nn.Module):

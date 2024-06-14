@@ -6,7 +6,7 @@ from D3Fold.rosetta.adapters import create_from_torsion, poses_to_dataset, appen
 from D3Fold.data.torch_data import Collator
 from torch.utils.data import DataLoader
 from dataclasses import dataclass
-from D3Fold.data.openfold.rigid_utils import Rotation, Rigid
+from D3Fold.data.openfold.rigid_utils import Rotation, Rigid, rigid_constants
 
 # Initialize PyRosetta
 

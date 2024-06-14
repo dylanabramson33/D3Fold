@@ -18,7 +18,8 @@ class GIAT(L.LightningModule):
         pad_value=-100,
     ):
         super(GIAT, self).__init__()
-        self.embedder = nn.Embedding(num_tokens, embed_dim)
+        self.lang_embedder = nn.Embedding(num_tokens, embed_dim)
+        self.angle_embedder = nn.Embedding(num_output_tokens, embed_dim)
         self.positional_encoding = PositionalEncoding(embed_dim, max_len=10000)
         self.pad_value = pad_value
 
@@ -55,8 +56,16 @@ class GIAT(L.LightningModule):
 
     def forward(self, data):
         x = data.aatype
-        x = x.masked_fill(x == self.pad_value, self.embedder.num_embeddings - 1)
-        x = self.embedder(x)
+        phis = data.quantized_phi_psi_omega[:,:,1]
+        psis = data.quantized_phi_psi_omega[:,:,2]
+        omegas = data.quantized_phi_psi_omega[:,:,0]
+
+        phis = self.angle_embedder(phis)
+        psis = self.angle_embedder(psis)
+        omegas = self.angle_embedder(omegas)
+
+        x = x.masked_fill(x == self.pad_value, self.lang_embedder.num_embeddings - 1)
+        x = self.lang_embedder(x)
         x = x + self.positional_encoding(data)
         mask = create_causal_mask(x.size(1), x.device)
         valid_frame_mask = data.backbone_rigid_mask.bool()
