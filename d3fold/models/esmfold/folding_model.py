@@ -6,16 +6,16 @@ from mamba_ssm import Mamba
 import esm
 import lightning as L
 
-from D3Fold.data.openfold.residue_constants import (
+from d3fold.data.openfold.residue_constants import (
     restype_rigid_group_default_frame,
     restype_atom14_to_rigid_group,
     restype_atom14_mask,
     restype_atom14_rigid_group_positions,
 )
-from D3Fold.model.losses import pairwise_loss, seq_loss
+from d3fold.model.losses import pairwise_loss, seq_loss
 from invariant_point_attention import InvariantPointAttention
-from D3Fold.model import utils as model_utils
-from D3Fold.model.common.positional_encoding import PositionalEncoding
+from d3fold.model import utils as model_utils
+from d3fold.model.common.positional_encoding import PositionalEncoding
 
 
 class ESMEmbedder(nn.Module):

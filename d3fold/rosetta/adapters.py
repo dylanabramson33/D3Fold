@@ -5,7 +5,7 @@ import torch
 import pyrosetta
 from pyrosetta import rosetta
 
-from D3Fold.data.torch_data import SingleChainData
+from d3fold.data.torch_data import SingleChainData
 
 
 # Initialize PyRosetta

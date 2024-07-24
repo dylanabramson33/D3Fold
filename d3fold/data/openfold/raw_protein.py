@@ -19,7 +19,7 @@ import io
 from typing import Any, Sequence, Mapping, Optional
 import string
 
-from D3Fold.data.openfold import residue_constants
+from d3fold.data.openfold import residue_constants
 from Bio.PDB import PDBParser
 import numpy as np
 import modelcif

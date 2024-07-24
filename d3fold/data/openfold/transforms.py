@@ -17,13 +17,13 @@ import numpy as np
 import torch
 from contextlib import contextmanager
 
-from D3Fold.data.openfold import residue_constants as rc
-from D3Fold.data.openfold.rigid_utils import Rotation, Rigid
-from D3Fold.data.openfold.rigid_matrix_vector import Rigid3Array
-from D3Fold.data.openfold.rotation_matrix import Rot3Array
-from D3Fold.data.openfold.vector import Vec3Array
+from d3fold.data.openfold import residue_constants as rc
+from d3fold.data.openfold.rigid_utils import Rotation, Rigid
+from d3fold.data.openfold.rigid_matrix_vector import Rigid3Array
+from d3fold.data.openfold.rotation_matrix import Rot3Array
+from d3fold.data.openfold.vector import Vec3Array
 
-from D3Fold.data.openfold.tensor_utils import (
+from d3fold.data.openfold.tensor_utils import (
     batched_gather,
 )
 from torch import cdist

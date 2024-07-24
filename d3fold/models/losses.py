@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from D3Fold.data.openfold import residue_constants as rc
+from d3fold.data.openfold import residue_constants as rc
 
 class LossFn:
     def __init__(self, loss_fn, representation_target="pair", name=None):

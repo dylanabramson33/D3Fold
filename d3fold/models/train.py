@@ -1,10 +1,10 @@
 from lightning.pytorch.loggers import WandbLogger
 from lightning import Trainer
 
-from D3Fold.data.protein import build_types
-from D3Fold.model.folding_model import D3Fold
-from D3Fold.data.torch_data import SingleChainData
-from D3Fold.data.torch_data import Collator
+from d3fold.data.protein import build_types
+from d3fold.model.folding_model import D3Fold
+from d3fold.data.torch_data import SingleChainData
+from d3fold.data.torch_data import Collator
 from torch.utils.data import DataLoader
 
 def main():

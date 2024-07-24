@@ -2,8 +2,8 @@ import torch
 from typing import Union
 
 from torch import nn
-from D3Fold.data.openfold.rigid_utils import Rigid
-from D3Fold.data.openfold import rigid_matrix_vector
+from d3fold.data.openfold.rigid_utils import Rigid
+from d3fold.data.openfold import rigid_matrix_vector
 
 def torsion_angles_to_frames(
     r: Union[Rigid, rigid_matrix_vector.Rigid3Array],

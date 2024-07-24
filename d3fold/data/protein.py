@@ -6,10 +6,10 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 import hydra
 
-from D3Fold.data.openfold.raw_protein import make_pdb_features
-from D3Fold.data.openfold.raw_protein import np_to_tensor_dict
-from D3Fold.data.openfold import transforms
-from D3Fold.data.openfold.raw_protein import RawProtein
+from d3fold.data.openfold.raw_protein import make_pdb_features
+from d3fold.data.openfold.raw_protein import np_to_tensor_dict
+from d3fold.data.openfold import transforms
+from d3fold.data.openfold.raw_protein import RawProtein
 
 class ProteinDataType:
     def __init__(
@@ -97,40 +97,9 @@ def build_types(cfg: DictConfig):
 
 @dataclass
 class TorchProtein:
-    aatype: ProteinData | None = None
-    residue_index: ProteinData | None = None
-    file: ProteinData | None = None
-    all_atom_positions: ProteinData | None = None
-    all_atom_mask: ProteinData | None = None
-    resolution: ProteinData | None = None
-    is_distillation: ProteinData | None = None
-    atom14_atom_exists: ProteinData | None = None
-    residx_atom14_to_atom37: ProteinData | None = None
-    residx_atom37_to_atom14: ProteinData | None = None
-    atom37_atom_exists: ProteinData  | None = None
-    atom14_gt_exists: ProteinData | None = None
-    atom14_gt_positions: ProteinData | None = None
-    atom14_alt_gt_positions: ProteinData | None = None
-    atom14_alt_gt_exists: ProteinData  | None = None
-    rigidgroups_gt_frames: ProteinData | None = None
-    rigidgroups_gt_exists: ProteinData | None = None
-    rigidgroups_group_exists: ProteinData | None = None
-    rigidgroups_group_is_ambiguous: ProteinData | None = None
-    rigidgroups_alt_gt_frames: ProteinData | None = None
-    torsion_angles_sin_cos: ProteinData | None = None
-    alt_torsion_angles_sin_cos: ProteinData | None = None
-    torsion_angles_mask: ProteinData | None = None
-    pseudo_beta: ProteinData | None = None
-    pseudo_beta_mask: ProteinData | None = None
-    backbone_rigid_tensor: ProteinData | None = None
-    backbone_rigid_mask: ProteinData | None = None
-    chi_angles_sin_cos: ProteinData | None = None
-    chi_mask: ProteinData | None = None
-    sequence: ProteinData | None = None
-    distance_mat_stack: ProteinData | None = None
-    chain_index : ProteinData | None = None
-    quantized_phi_psi_omega: ProteinData | None = None
-    pairwise_seq_dist : ProteinData | None = None
+    def __init__(self, **kwargs):
+      for key in kwargs.keys():
+        setattr(self, key, kwargs[key])
 
     @classmethod
     def from_dict(cls, data_dict, type_dict):

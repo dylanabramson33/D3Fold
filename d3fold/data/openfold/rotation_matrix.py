@@ -19,8 +19,8 @@ from typing import List
 
 import torch
 
-from D3Fold.data.openfold import vector
-from D3Fold.data.openfold.tensor_utils import tensor_tree_map
+from d3fold.data.openfold import vector
+from d3fold.data.openfold.tensor_utils import tensor_tree_map
 
 
 COMPONENTS = ['xx', 'xy', 'xz', 'yx', 'yy', 'yz', 'zx', 'zy', 'zz']

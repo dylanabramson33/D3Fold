@@ -2,9 +2,9 @@ import lightning as L
 import torch
 from torch import nn
 
-from D3Fold.models.common.positional_encoding import PositionalEncoding
-from D3Fold.models.attention_transformer.causal_attention import AttentionBlock, create_causal_mask
-from D3Fold.models.attention_transformer.causal_ipa import IPABlock
+from d3fold.models.common.positional_encoding import PositionalEncoding
+from d3fold.models.attention_transformer.causal_attention import AttentionBlock, create_causal_mask
+from d3fold.models.attention_transformer.causal_ipa import IPABlock
 
 class GIAT(L.LightningModule):
     def __init__(
