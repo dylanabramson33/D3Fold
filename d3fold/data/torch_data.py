@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from torch_geometric.data import Batch, Data
 from D3Fold.data.protein import TorchProtein
 import torch.nn.functional as F
+
 # Load ESM-2 model
 model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
 batch_converter = alphabet.get_batch_converter()
@@ -43,7 +44,6 @@ def pad_pairrep(list_of_tensors, pad_value=0):
     # Stack the padded tensors to create a batched tensor
     batched_tensor = torch.stack(padded_tensors)
     return batched_tensor
-
 
 class SingleChainData(Dataset):
     def __init__(
@@ -105,7 +105,7 @@ class SingleChainData(Dataset):
             # trunk-ignore(bandit/B301)
             chain = pickle.load(f)
 
-        data_fields = list(chain.__dataclass_fields__.keys())
+        data_fields = list(chain._features.keys())
         for (filter_fn, fields) in self.filter_fns_with_fields:
             chain.filter_fields(filter_fn, fields)
         if self.use_crop:
