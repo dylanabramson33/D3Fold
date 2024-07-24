@@ -95,7 +95,6 @@ def build_types(cfg: DictConfig):
   return types
   
 
-@dataclass
 class TorchProtein:
     def __init__(self, **kwargs):
       for key in kwargs.keys():
@@ -173,6 +172,9 @@ class TorchProtein:
           continue
         field_data = getattr(self, field)
         field_data.crop_data(mask)
+    
+    def __repr__(self):
+      return str({key: getattr(self, key) for key in self.__dataclass_fields__.keys()})
 
     @classmethod
     def from_pdb(cls, pdb_file, type_dict):
