@@ -91,7 +91,7 @@ class RawProtein:
 
 
     @classmethod
-    def from_pdb_path(cls, pdb_path: str, chain_id: Optional[str] = None):
+    def from_pdb_path(cls, pdb_path: str, chain_ids: Optional[str] = None):
         """Takes a PDB string and constructs a Protein object.
 
         WARNING: All non-standard residue types will be converted into UNK. All
@@ -99,9 +99,8 @@ class RawProtein:
 
         Args:
         pdb_str: The contents of the pdb file
-        chain_id: If None, then the whole pdb file is parsed. If chain_id is specified (e.g. A), then only that chain
-            is parsed.
-
+        chain_id: If None, then the whole pdb file is parsed. If chain_id is specified (e.g. A), then only the chains 
+            in chain_ids
         Returns:
         A new `Protein` parsed from the pdb contents.
         """
@@ -123,8 +122,9 @@ class RawProtein:
         b_factors = []
 
         for chain in model:
-            if(chain_id is not None and chain.id != chain_id):
+            if(chain_ids is not None and chain.id not in chain_ids):
                 continue
+
 
             for res in chain:
                 if res.id[2] != " ":
@@ -155,7 +155,7 @@ class RawProtein:
                 atom_positions.append(pos)
                 atom_mask.append(mask)
                 residue_index.append(res.id[1])
-                chain_ids.append(chain.id)
+                chain_ids.append(chain.id.upper())
                 b_factors.append(res_b_factors)
 
         parents = None

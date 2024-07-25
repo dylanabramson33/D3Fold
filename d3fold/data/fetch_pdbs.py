@@ -33,9 +33,13 @@ def fetch_pdb_ids(num_chains=1):
         print("Failed to fetch PDB IDs")
         return []
 # Function to download PDB files based on a list of PDB IDs
-def download_pdb_files(pdb_id):
+def download_pdb_file(pdb_id, chain_ids=None):
     pdbl = PDBList()
     pdbl.retrieve_pdb_file(pdb_id, pdir='pdbs', file_format='pdb', overwrite=False)
+
+def download_pdb_files(pdb_ids, chain_ids=None, max_workers=5):
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        list(executor.map(download_pdb_file, pdb_ids))
 
 def download_inverse_folding_data(path_to_split_file, path_to_file):
     process_protein_inv(path_to_split_file, path_to_file)
