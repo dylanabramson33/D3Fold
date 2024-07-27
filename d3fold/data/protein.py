@@ -204,9 +204,7 @@ class TorchProtein:
         except Exception as e:
             print(f"Failed to load {pdb_file}")
             print(e)
-                
-       
-    
+
     @classmethod
     def load_pdb_ids(cls, pdb_ids, type_dict, save_path=None, max_workers=5):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
