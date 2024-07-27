@@ -37,7 +37,7 @@ def download_pdb_file(pdb_id, chain_ids=None):
     pdbl = PDBList()
     pdbl.retrieve_pdb_file(pdb_id, pdir='pdbs', file_format='pdb', overwrite=False)
 
-def download_pdb_files(pdb_ids, chain_ids=None, max_workers=5):
+def download_pdb_files(pdb_ids, max_workers=5):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         list(executor.map(download_pdb_file, pdb_ids))
 

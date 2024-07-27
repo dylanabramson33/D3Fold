@@ -132,6 +132,7 @@ class RawProtein:
                         f"PDB contains an insertion code at chain {chain.id} and residue "
                         f"index {res.id[1]}. These are not supported."
                     )
+                v 
                 res_shortname = residue_constants.restype_3to1.get(res.resname, "X")
                 restype_idx = residue_constants.restype_order.get(
                     res_shortname, residue_constants.restype_num

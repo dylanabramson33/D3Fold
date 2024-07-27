@@ -167,7 +167,8 @@ class TorchProtein:
     def __repr__(self):
         return str({key: value for key, value in self._features.items()})
     
-    def transform_features(self, feats):
+    @staticmethod
+    def transform_features(feats):
         tensor_dic = np_to_tensor_dict(feats, feats.keys())
         tensor_dic = transforms.squeeze_features(tensor_dic)
         tensor_dic = transforms.make_atom14_masks(tensor_dic)
@@ -187,6 +188,6 @@ class TorchProtein:
     def from_pdb(cls, pdb_file, type_dict, chain_ids=None):
         protein = RawProtein.from_pdb_path(pdb_file, chain_ids)
         feats = make_pdb_features(protein, "no desc", is_distillation=False)
-        tensor_dic = cls.transform_features(feats)
+        tensor_dic = TorchProtein.transform_features(feats)
         return cls.from_dict(tensor_dic, type_dict)
 
