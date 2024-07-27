@@ -206,10 +206,10 @@ class TorchProtein:
             print(e)
 
     @classmethod
-    def load_pdb_ids(cls, pdb_ids, type_dict, save_path=None, max_workers=5):
+    def load_pdb_ids(cls, pdb_ids, all_chain_ids, type_dict, save_path=None, max_workers=5):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             if save_path:
                 save_paths = [os.path.join(save_path, f"{pdb_id}.pkl") for pdb_id in pdb_ids]
             
             list(executor.map(
-                cls.from_pdb, pdb_ids, repeat(type_dict, len(pdb_ids)), save_paths))
+                cls.from_pdb, pdb_ids, repeat(type_dict, len(pdb_ids)), all_chain_ids, save_paths))
