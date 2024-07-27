@@ -122,7 +122,7 @@ class RawProtein:
         b_factors = []
 
         for chain in model:
-            if(chain_ids is not None and chain.id not in chain_ids):
+            if(chain_ids is not None and chain.id.upper() not in chain_ids):
                 continue
 
 
