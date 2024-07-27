@@ -30,6 +30,9 @@ import modelcif.protocol
 import modelcif.alignment
 import modelcif.qa_metric
 import torch
+import biotite.structure as struc
+import biotite.structure.io as strucio
+import numpy as np
 
 FeatureDict = Mapping[str, np.ndarray]
 ModelOutput = Mapping[str, Any]  # Is a nested dict.
@@ -88,76 +91,72 @@ class RawProtein:
                 "chains because these cannot be written to PDB format"
             )
 
-
-
     @classmethod
     def from_pdb_path(cls, pdb_path: str, keep_chains: Optional[str] = None):
-        """Takes a PDB string and constructs a Protein object.
-
-        WARNING: All non-standard residue types will be converted into UNK. All
-        non-standard atoms will be ignored.
-
-        Args:
-        pdb_str: The contents of the pdb file
-        chain_id: If None, then the whole pdb file is parsed. If chain_id is specified (e.g. A), then only the chains 
-            in chain_ids
-        Returns:
-        A new `Protein` parsed from the pdb contents.
         """
-        parser = PDBParser(QUIET=True)
-
-        structure = parser.get_structure("none", pdb_path)
-        models = list(structure.get_models())
-        if len(models) != 1:
-            raise ValueError(
-                f"Only single model PDBs are supported. Found {len(models)} models."
-            )
-        model = models[0]
-
+        Takes a PDB file path and constructs a Protein object.
+        
+        Args:
+        pdb_path: The path to the PDB file
+        keep_chains: If None, then the whole PDB file is parsed. If specified (e.g. 'A'), then only the specified chains are kept.
+        
+        Returns:
+        A new `Protein` parsed from the PDB file.
+        """
+        # Read the PDB file
+        pdb_file = strucio.load_structure(pdb_path)
+        
+        # Check if it's a single model
+        if pdb_file.get_model_count() != 1:
+            raise ValueError(f"Only single model PDBs are supported. Found {pdb_file.get_model_count()} models.")
+        
+        # Get the first model
+        structure = pdb_file.get_structure()[0]
+        
         atom_positions = []
         aatype = []
         atom_mask = []
         residue_index = []
         chain_ids = []
         b_factors = []
-
-        for chain in model:
-            if(chain_ids != None and chain.id.upper() not in keep_chains):
+        
+        for chain in structure.get_chains():
+            chain_id = chain.chain_id
+            if keep_chains is not None and chain_id.upper() not in keep_chains:
                 continue
-
-            for res in chain:
-                if res.id[2] != " ":
-                    raise ValueError(
-                        f"PDB contains an insertion code at chain {chain.id} and residue "
-                        f"index {res.id[1]}. These are not supported."
-                    )
-
-                res_shortname = residue_constants.restype_3to1.get(res.resname, "X")
-                restype_idx = residue_constants.restype_order.get(
-                    res_shortname, residue_constants.restype_num
-                )
+            
+            for res in chain.get_residues():
+                if res.insertion_code != "":
+                    raise ValueError(f"PDB contains an insertion code at chain {chain_id} and residue index {res.number}. These are not supported.")
+                
+                res_shortname = residue_constants.restype_3to1.get(res.get_name(), "X")
+                restype_idx = residue_constants.restype_order.get(res_shortname, residue_constants.restype_num)
+                
                 pos = np.zeros((residue_constants.atom_type_num, 3))
                 mask = np.zeros((residue_constants.atom_type_num,))
                 res_b_factors = np.zeros((residue_constants.atom_type_num,))
-                for atom in res:
-                    if atom.name not in residue_constants.atom_types:
+                
+                for atom in res.get_atoms():
+                    atom_name = atom.atom_name
+                    if atom_name not in residue_constants.atom_types:
                         continue
-                    pos[residue_constants.atom_order[atom.name]] = atom.coord
-                    mask[residue_constants.atom_order[atom.name]] = 1.0
-                    res_b_factors[
-                        residue_constants.atom_order[atom.name]
-                    ] = atom.bfactor
+                    
+                    atom_index = residue_constants.atom_order[atom_name]
+                    pos[atom_index] = atom.coord
+                    mask[atom_index] = 1.0
+                    res_b_factors[atom_index] = atom.b_factor
+                
                 if np.sum(mask) < 0.5:
                     # If no known atom positions are reported for the residue then skip it.
                     continue
-
+                
                 aatype.append(restype_idx)
                 atom_positions.append(pos)
                 atom_mask.append(mask)
-                residue_index.append(res.id[1])
-                chain_ids.append(chain.id.upper())
+                residue_index.append(res.number)
+                chain_ids.append(chain_id.upper())
                 b_factors.append(res_b_factors)
-
+        
         parents = None
         parents_chain_index = None
         chain_id_mapping = {cid: n for n, cid in enumerate(string.ascii_uppercase)}
