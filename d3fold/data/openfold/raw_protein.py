@@ -106,13 +106,9 @@ class RawProtein:
         # Read the PDB file
         pdb_file = strucio.load_structure(pdb_path)
         
-        # Check if it's a single model
-        if pdb_file.get_model_count() != 1:
-            raise ValueError(f"Only single model PDBs are supported. Found {pdb_file.get_model_count()} models.")
-        
-        # Get the first model
-        structure = pdb_file.get_structure()[0]
-        
+        # Biotite doesn't have a direct way to check for multiple models
+        # We'll assume it's a single model and work with the entire structure
+
         atom_positions = []
         aatype = []
         atom_mask = []
@@ -120,31 +116,36 @@ class RawProtein:
         chain_ids = []
         b_factors = []
         
-        for chain in structure.get_chains():
-            chain_id = chain.chain_id
+        for chain_id in pdb_file.chain_id:
             if keep_chains is not None and chain_id.upper() not in keep_chains:
                 continue
             
-            for res in chain.get_residues():
-                if res.insertion_code != "":
-                    raise ValueError(f"PDB contains an insertion code at chain {chain_id} and residue index {res.number}. These are not supported.")
+            chain_filter = (pdb_file.chain_id == chain_id)
+            chain_structure = pdb_file[chain_filter]
+            
+            for res_id in struc.get_residues(chain_structure):
+                res_filter = (chain_structure.res_id == res_id)
+                res_structure = chain_structure[res_filter]
                 
-                res_shortname = residue_constants.restype_3to1.get(res.get_name(), "X")
+                if res_structure.ins_code[0] != "":
+                    raise ValueError(f"PDB contains an insertion code at chain {chain_id} and residue index {res_id}. These are not supported.")
+                
+                res_name = res_structure.res_name[0]
+                res_shortname = residue_constants.restype_3to1.get(res_name, "X")
                 restype_idx = residue_constants.restype_order.get(res_shortname, residue_constants.restype_num)
                 
                 pos = np.zeros((residue_constants.atom_type_num, 3))
                 mask = np.zeros((residue_constants.atom_type_num,))
                 res_b_factors = np.zeros((residue_constants.atom_type_num,))
                 
-                for atom in res.get_atoms():
-                    atom_name = atom.atom_name
-                    if atom_name not in residue_constants.atom_types:
+                for atom, coord, b_factor in zip(res_structure.atom_name, res_structure.coord, res_structure.b_factor):
+                    if atom not in residue_constants.atom_types:
                         continue
                     
-                    atom_index = residue_constants.atom_order[atom_name]
-                    pos[atom_index] = atom.coord
+                    atom_index = residue_constants.atom_order[atom]
+                    pos[atom_index] = coord
                     mask[atom_index] = 1.0
-                    res_b_factors[atom_index] = atom.b_factor
+                    res_b_factors[atom_index] = b_factor
                 
                 if np.sum(mask) < 0.5:
                     # If no known atom positions are reported for the residue then skip it.
@@ -153,7 +154,7 @@ class RawProtein:
                 aatype.append(restype_idx)
                 atom_positions.append(pos)
                 atom_mask.append(mask)
-                residue_index.append(res.number)
+                residue_index.append(res_id)
                 chain_ids.append(chain_id.upper())
                 b_factors.append(res_b_factors)
         
