@@ -91,7 +91,7 @@ class RawProtein:
 
 
     @classmethod
-    def from_pdb_path(cls, pdb_path: str, chain_ids: Optional[str] = None):
+    def from_pdb_path(cls, pdb_path: str, keep_chains: Optional[str] = None):
         """Takes a PDB string and constructs a Protein object.
 
         WARNING: All non-standard residue types will be converted into UNK. All
@@ -122,9 +122,8 @@ class RawProtein:
         b_factors = []
 
         for chain in model:
-            if(chain_ids is not None and chain.id.upper() not in chain_ids):
+            if(chain_ids != None and chain.id.upper() not in keep_chains):
                 continue
-
 
             for res in chain:
                 if res.id[2] != " ":
@@ -132,7 +131,7 @@ class RawProtein:
                         f"PDB contains an insertion code at chain {chain.id} and residue "
                         f"index {res.id[1]}. These are not supported."
                     )
-                v 
+
                 res_shortname = residue_constants.restype_3to1.get(res.resname, "X")
                 restype_idx = residue_constants.restype_order.get(
                     res_shortname, residue_constants.restype_num
