@@ -1,3 +1,4 @@
+from itertools import repeat
 import numpy as np
 import random
 import torch
@@ -5,11 +6,14 @@ from typing import Dict, Any
 
 from omegaconf import DictConfig
 import hydra
+import pickle
+import os
 
 from d3fold.data.openfold.raw_protein import make_pdb_features
 from d3fold.data.openfold.raw_protein import np_to_tensor_dict
 from d3fold.data.openfold import transforms
 from d3fold.data.openfold.raw_protein import RawProtein
+from concurrent.futures import ThreadPoolExecutor
 
 
 class ProteinDataType:
@@ -185,9 +189,29 @@ class TorchProtein:
         return tensor_dic
 
     @classmethod
-    def from_pdb(cls, pdb_file, type_dict, chain_ids=None):
-        protein = RawProtein.from_pdb_path(pdb_file, chain_ids)
-        feats = make_pdb_features(protein, "no desc", is_distillation=False)
-        tensor_dic = TorchProtein.transform_features(feats)
-        return cls.from_dict(tensor_dic, type_dict)
+    def from_pdb(cls, pdb_file, type_dict, chain_ids=None, save_path=None):
+        try:
+            protein = RawProtein.from_pdb_path(pdb_file, chain_ids)
+            feats = make_pdb_features(protein, "no desc", is_distillation=False)
+            tensor_dic = TorchProtein.transform_features(feats)
+            torch_protein = cls.from_dict(tensor_dic, type_dict)
+            
+            if save_path:
+                with open(save_path, "wb") as f:
+                    pickle.dump(torch_protein, f)
 
+            return torch_protein
+        except Exception as e:
+            print(f"Failed to load {pdb_file}")
+            print(e)
+                
+       
+    
+    @classmethod
+    def load_pdb_ids(cls, pdb_ids, type_dict, save_path=None, max_workers=5):
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            if save_path:
+                save_paths = [os.path.join(save_path, f"{pdb_id}.pkl") for pdb_id in pdb_ids]
+            
+            list(executor.map(
+                cls.from_pdb, pdb_ids, repeat(type_dict, len(pdb_ids)), save_paths))
